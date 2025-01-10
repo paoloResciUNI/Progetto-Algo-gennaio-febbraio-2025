@@ -6,6 +6,17 @@ import (
 	"strings"
 )
 
+type Lista struct {
+	testa *nodo
+	coda  *nodo
+}
+
+type nodo struct {
+	entitàNelCampo *punto
+	successivo     *nodo
+	precedente     *nodo
+}
+
 // nodo
 //
 // - Se il punto contiene un automa la stringa id ne conterrà il nome.
@@ -40,13 +51,13 @@ func newPiano() piano {
 func main() {
 	newPiano()
 	automa(2, 1, "1")
-	ostacolo(1, 5, 5, 8)
-	ostacolo(14, 1, 17, 4)
-	ostacolo(7, 3, 10, 5)
-	ostacolo(9, 5, 16, 7)
-	ostacolo(6, 8, 10, 10)
-	ostacolo(3, 0, 4, 2)
-	esistePercorso(15, 9, "1")
+	// ostacolo(1, 5, 5, 8)
+	// ostacolo(14, 1, 17, 4)
+	// ostacolo(7, 3, 10, 5)
+	// ostacolo(9, 5, 16, 7)
+	// ostacolo(6, 8, 10, 10)
+	// ostacolo(3, 0, 4, 2)
+	esistePercorso(15, 10, "1")
 	stato(2, 1)
 	stato(3, 6)
 	stato(5, 6)
@@ -171,12 +182,14 @@ func esistePercorso(x, y int, eta string) {
 		return
 	}
 	percorrente := Campo.cerca(x, y, eta)
+	Println(percorrente)
 	if percorrente == nil {
 		Println("NO")
 		return
 	}
 	distanza := calcolaDistanza(percorrente.coordinataX, percorrente.coordinataY, x, y)
-	percorsoEffettuato, passiMancanti := avanza(percorrente, distanza)
+	percorsoEffettuato, passiMancanti := (avanza(percorrente, distanza))
+	Println(percorsoEffettuato)
 	if percorsoEffettuato.coordinataX == x && percorsoEffettuato.coordinataY == y && passiMancanti == 0 {
 		Println("SI")
 		return
@@ -193,36 +206,32 @@ func avanza(p *punto, passi int) (*punto, int) {
 	possibilePasso.coordinataX = p.coordinataX
 	possibilePasso.coordinataY = p.coordinataY
 	possibilePasso.id = p.id
-	p.adiacenze()
-	nord := calcolaDistanza(Sorgente.coordinataX, Sorgente.coordinataY, p.coordinataX, p.coordinataY+1)
-	sud := calcolaDistanza(Sorgente.coordinataX, Sorgente.coordinataY, p.coordinataX, p.coordinataY-1)
-	west := calcolaDistanza(Sorgente.coordinataX-1, Sorgente.coordinataY, p.coordinataX, p.coordinataY)
-	est := calcolaDistanza(Sorgente.coordinataX+1, Sorgente.coordinataY, p.coordinataX, p.coordinataY)
-	slCoords := [4]*int{&nord, &sud, &west, &est}
-	direzione := scegliDirezione(p, slCoords[:])
-	switch {
-	case direzione == &nord:
-		p.coordinataY++
-		return avanza(p, passi-1)
-	case direzione == &sud:
-		p.coordinataY--
-		return avanza(p, passi-1)
-	case direzione == &est:
-		p.coordinataX++
-		return avanza(p, passi-1)
-	case direzione == &west:
-		p.coordinataX--
-		return avanza(p, passi-1)
+	if p.coordinataX < Sorgente.coordinataX {
+		possibilePasso.coordinataX = p.coordinataX + 1
+		passi--
+		return avanza(possibilePasso, passi)
+	} else if p.coordinataX > Sorgente.coordinataX {
+		possibilePasso.coordinataX = p.coordinataX - 1
+		passi--
+		return avanza(possibilePasso, passi)
 	}
-
-	return p, passi
+	if p.coordinataY < Sorgente.coordinataY {
+		possibilePasso.coordinataY = p.coordinataY + 1
+		passi--
+		return avanza(possibilePasso, passi)
+	} else if p.coordinataY > Sorgente.coordinataY {
+		possibilePasso.coordinataY = p.coordinataY - 1
+		return avanza(possibilePasso, passi)
+	}
+	passi--
+	return avanza(p, passi)
 }
 
 // La funzionde in questione dice quale direzione è meglio intraprendere per raggiungere
 // la sorgente del segnale
 func scegliDirezione(p *punto, coord []*int) *int {
-	direzionePossibile1 := findMin(coord)
-	direzionePossibile2 := findMin(coord[0:])
+	direzionePossibile1, index := findMin(coord)
+	direzionePossibile2, _ := findMin(coord[index:])
 	if *direzionePossibile1 == *direzionePossibile2 {
 		sX := Sorgente.coordinataX
 		sY := Sorgente.coordinataY
@@ -233,27 +242,40 @@ func scegliDirezione(p *punto, coord []*int) *int {
 			sX--
 		}
 		if sX < sY {
+			*direzionePossibile1 += 100
 			return direzionePossibile2
+		} else if sX == sY {
+			if p.coordinataX == Sorgente.coordinataX {
+				*direzionePossibile1 += 100
+				return direzionePossibile2
+			} else if p.coordinataY == Sorgente.coordinataY {
+				*direzionePossibile2 += 100
+				return direzionePossibile1
+			}
 		} else {
+			*direzionePossibile2 += 100
 			return direzionePossibile1
 		}
 	} else if *direzionePossibile1 < *direzionePossibile2 {
+		*direzionePossibile2 += 100
 		return direzionePossibile1
 	} else {
+		*direzionePossibile1 += 100
 		return direzionePossibile2
 	}
-
+	return direzionePossibile1
 }
 
 // Cerco il puntatore che contiene il valore minimo tra le coordinate in input.
-func findMin(coords []*int) *int {
-	min := coords[0]
-	for i := 1; i < 4; i++ {
+func findMin(coords []*int) (min *int, indice int) {
+	min = coords[0]
+	for i := 1; i < len(coords); i++ {
 		if *coords[i] < *min {
 			min = coords[i]
+			indice = i
 		}
 	}
-	return min
+	return
 }
 
 func (*piano) cerca(x, y int, id string) *punto {
