@@ -8,17 +8,6 @@ import (
 	"strings"
 )
 
-// type Lista struct {
-// 	testa *nodo
-// 	coda  *nodo
-// }
-
-// type nodo struct {
-// 	entitàNelCampo *punto
-// 	successivo     *nodo
-// 	precedente     *nodo
-// }
-
 // nodo
 // - Se il punto contiene un automa la stringa id ne conterrà il nome.
 // - Se il punto è vuoto allora la stringa srà vuota.
@@ -45,8 +34,8 @@ func esegui(p piano, s string) {
 }
 
 func newPiano() piano {
-	crea()
-	return Campo
+	var nuovPiano piano
+	return nuovPiano
 }
 
 func main() {
@@ -88,11 +77,6 @@ func main() {
 			return
 		}
 	}
-}
-
-// Crea un piano vuoto, eliminando il piano già esistente
-func crea() {
-	Campo = *new(piano)
 }
 
 // Si assume che il campo sia già ordinato nel formato corretto:
@@ -146,14 +130,14 @@ func automa(x, y int, eta string) {
 			puntoCercato.coordinataX = x
 			puntoCercato.coordinataY = y
 			Campo.remove(eta)
-			puntoCercato.adiacenze()
+			// puntoCercato.adiacenze()
 		}
 	} else {
 		puntoCercato = new(punto)
 		puntoCercato.coordinataX = x
 		puntoCercato.coordinataY = y
 		puntoCercato.id = eta
-		puntoCercato.adiacenze()
+		// puntoCercato.adiacenze()
 		Campo = append([]*punto{puntoCercato}, Campo...)
 	}
 }
@@ -274,34 +258,34 @@ func (*piano) cerca(x, y int, id string) *punto {
 	return nil
 }
 
-func (p *punto) adiacenze() {
-	var x, y int
-	x = p.coordinataX - 1
-	y = p.coordinataY - 1
-	p.adiacenza = []*punto{}
+// func (p *punto) adiacenze() {
+// 	var x, y int
+// 	x = p.coordinataX - 1
+// 	y = p.coordinataY - 1
+// 	p.adiacenza = []*punto{}
 
-	for y < p.coordinataY+2 {
-		for x < p.coordinataX+2 {
-			if dentroAreaOstacolo(x, y) {
-				Ostacolo := new(punto)
-				Ostacolo.coordinataX = x
-				Ostacolo.coordinataY = y
-				Ostacolo.id = "ostacolo"
-				p.adiacenza = append(p.adiacenza, Ostacolo)
-				x++
-				continue
-			}
-			puntoAdiacente := Campo.cerca(x, y, "")
-			if (puntoAdiacente != nil) && (x != p.coordinataX || y != p.coordinataY) {
-				p.adiacenza = append(p.adiacenza, puntoAdiacente)
-				puntoAdiacente.adiacenza = append(puntoAdiacente.adiacenza, p)
-			}
-			x++
-		}
-		x = p.coordinataX - 1
-		y++
-	}
-}
+// 	for y < p.coordinataY+2 {
+// 		for x < p.coordinataX+2 {
+// 			if dentroAreaOstacolo(x, y) {
+// 				Ostacolo := new(punto)
+// 				Ostacolo.coordinataX = x
+// 				Ostacolo.coordinataY = y
+// 				Ostacolo.id = "ostacolo"
+// 				p.adiacenza = append(p.adiacenza, Ostacolo)
+// 				x++
+// 				continue
+// 			}
+// 			puntoAdiacente := Campo.cerca(x, y, "")
+// 			if (puntoAdiacente != nil) && (x != p.coordinataX || y != p.coordinataY) {
+// 				p.adiacenza = append(p.adiacenza, puntoAdiacente)
+// 				puntoAdiacente.adiacenza = append(puntoAdiacente.adiacenza, p)
+// 			}
+// 			x++
+// 		}
+// 		x = p.coordinataX - 1
+// 		y++
+// 	}
+// }
 
 // Rimuove un elemento dalla slice Campo.
 func (*piano) remove(eta string) {
@@ -311,7 +295,7 @@ func (*piano) remove(eta string) {
 				return
 			}
 			for adiacente := 0; adiacente < len(Campo[i].adiacenza); adiacente++ {
-				Campo[i].adiacenza[adiacente].adiacenze()
+				// Campo[i].adiacenza[adiacente].adiacenze()
 			}
 		}
 	}
