@@ -30,7 +30,35 @@ var Campo piano
 var Sorgente *punto
 
 func esegui(p piano, s string) {
-
+	comandi := strings.Split(s, " ")
+	switch comandi[0] {
+	case "c":
+		Campo = newPiano()
+	case "S":
+		stampa()
+	case "s":
+		a, _ := strconv.Atoi(comandi[1])
+		b, _ := strconv.Atoi(comandi[2])
+		stato(a, b)
+	case "a":
+		a, _ := strconv.Atoi(comandi[1])
+		b, _ := strconv.Atoi(comandi[2])
+		automa(a, b, comandi[3])
+	case "o":
+		a, _ := strconv.Atoi(comandi[1])
+		b, _ := strconv.Atoi(comandi[2])
+		c, _ := strconv.Atoi(comandi[3])
+		d, _ := strconv.Atoi(comandi[4])
+		ostacolo(a, b, c, d)
+	case "p":
+		posizioni(comandi[1])
+	case "e":
+		a, _ := strconv.Atoi(comandi[1])
+		b, _ := strconv.Atoi(comandi[2])
+		esistePercorso(a, b, comandi[3])
+	case "f":
+		return
+	}
 }
 
 func newPiano() piano {
@@ -39,43 +67,19 @@ func newPiano() piano {
 }
 
 func main() {
-	comandi := []string{}
-
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
-		comandi = append(comandi, scanner.Text())
-	}
-
-	for i := 0; i < len(comandi); i++ {
-		campiComando := strings.Split(comandi[i], " ")
-		switch campiComando[0] {
-		case "c":
-			Campo = newPiano()
-		case "S":
-			stampa()
-		case "s":
-			a, _ := strconv.Atoi(campiComando[1])
-			b, _ := strconv.Atoi(campiComando[2])
-			stato(a, b)
-		case "a":
-			a, _ := strconv.Atoi(campiComando[1])
-			b, _ := strconv.Atoi(campiComando[2])
-			automa(a, b, campiComando[3])
-		case "o":
-			a, _ := strconv.Atoi(campiComando[1])
-			b, _ := strconv.Atoi(campiComando[2])
-			c, _ := strconv.Atoi(campiComando[3])
-			d, _ := strconv.Atoi(campiComando[4])
-			ostacolo(a, b, c, d)
-		case "p":
-			posizioni(campiComando[1])
-		case "e":
-			a, _ := strconv.Atoi(campiComando[1])
-			b, _ := strconv.Atoi(campiComando[2])
-			esistePercorso(a, b, campiComando[3])
-		case "f":
-			return
-		}
+		esegui(Campo, scanner.Text())
+		// if scanner.Text() == "f" {
+		// 	break
+		// }
+		// switch {
+		// case strings.Contains(scanner.Text(), "c"):
+		// 	Campo = newPiano()
+		// case strings.Contains(scanner.Text(), "S"):
+		// 	stampa()
+		// case strings.Contains(scanner.Text(), "s"):
+		// }
 	}
 }
 
@@ -86,7 +90,7 @@ func stampa() {
 	Println("(")
 	for i < len(Campo) {
 		if !strings.Contains(Campo[i].id, "ostacolo") {
-			Printf("%s:%d,%d \n", Campo[i].id, Campo[i].coordinataX, Campo[i].coordinataY)
+			Printf("%s: %d,%d\n", Campo[i].id, Campo[i].coordinataX, Campo[i].coordinataY)
 		}
 		i++
 	}
@@ -174,7 +178,7 @@ func posizioni(alpha string) {
 	Println("(")
 	for i := 0; i < len(Campo); i++ {
 		if strings.HasPrefix(Campo[i].id, alpha) {
-			Printf("%s:%d,%d \n", Campo[i].id, Campo[i].coordinataX, Campo[i].coordinataY)
+			Printf("%s: %d,%d\n", Campo[i].id, Campo[i].coordinataX, Campo[i].coordinataY)
 		}
 	}
 	Println(")")
