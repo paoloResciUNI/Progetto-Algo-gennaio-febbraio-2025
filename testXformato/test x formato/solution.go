@@ -12,16 +12,21 @@ import (
 // - Se il punto contiene un automa la stringa id ne conterrà il nome.
 // - Se il punto è vuoto allora la stringa srà vuota.
 // - Se il punto fa parte di un ostacolo allora id srà uguale alla stringa "ostacolo"
+// - Il punto è anche un nodo della lista piano
 type punto struct {
 	coordinataX int
 	coordinataY int
 	id          string
 	richiamo    bool
-	adiacenza   []*punto
+	successivo  *punto
+	precedente  *punto
 }
 
 // rappresentazione del grafo che rappresenta il piano
-type piano []*punto
+type piano struct {
+	inizio *punto
+	fine   *punto
+}
 
 // Il camapo dove si muovono gli automi
 var Campo piano
@@ -70,39 +75,26 @@ func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		esegui(Campo, scanner.Text())
-		// if scanner.Text() == "f" {
-		// 	break
-		// }
-		// switch {
-		// case strings.Contains(scanner.Text(), "c"):
-		// 	Campo = newPiano()
-		// case strings.Contains(scanner.Text(), "S"):
-		// 	stampa()
-		// case strings.Contains(scanner.Text(), "s"):
-		// }
 	}
 }
 
 // Si assume che il campo sia già ordinato nel formato corretto:
 // Prima gli automi e poi gli ostacoli
 func stampa() {
-	i := 0
+	percorrente := new(punto)
 	Println("(")
-	for i < len(Campo) {
-		if !strings.Contains(Campo[i].id, "ostacolo") {
-			Printf("%s: %d,%d\n", Campo[i].id, Campo[i].coordinataX, Campo[i].coordinataY)
-		}
-		i++
+	percorrente = Campo.inizio
+	for percorrente != nil && !strings.Contains(percorrente.id, "ostacolo") {
+		Printf("%s: %d,%d\n", percorrente.id, percorrente.coordinataX, percorrente.coordinataY)
+		percorrente = percorrente.successivo
 	}
 	Println(")")
 	Println("[")
-	i = len(Campo) - 1
-	for i >= 0 {
-		if strings.Contains(Campo[i].id, "ostacolo") {
-			x0, y0, x1, y1 := estraiCoordinate(Campo[i].id)
-			Printf("(%d,%d)(%d,%d)\n", x0, y0, x1, y1)
-		}
-		i--
+	percorrente = Campo.fine
+	for percorrente != nil && strings.Contains(percorrente.id, "ostacolo") {
+		x0, y0, x1, y1 := estraiCoordinate(percorrente.id)
+		Printf("(%d,%d)(%d,%d)\n", x0, y0, x1, y1)
+		percorrente = percorrente.precedente
 	}
 	Println("]")
 }
@@ -128,21 +120,26 @@ func stato(x, y int) {
 func automa(x, y int, eta string) {
 	puntoCercato := Campo.cerca(x, y, eta)
 	if puntoCercato != nil {
-		if strings.Contains(puntoCercato.id, "ostacolo") {
+		if strings.Contains(puntoCercato.id, "ostacolo") && !dentroAreaOstacolo(x, y) {
 			return
 		} else {
 			puntoCercato.coordinataX = x
 			puntoCercato.coordinataY = y
-			Campo.remove(eta)
-			// puntoCercato.adiacenze()
+			// Campo.remove(eta)
 		}
 	} else {
 		puntoCercato = new(punto)
 		puntoCercato.coordinataX = x
 		puntoCercato.coordinataY = y
 		puntoCercato.id = eta
-		// puntoCercato.adiacenze()
-		Campo = append([]*punto{puntoCercato}, Campo...)
+		if Campo.inizio == nil {
+			Campo.inizio = puntoCercato
+			Campo.fine = puntoCercato
+			return
+		}
+		Campo.inizio.precedente = puntoCercato
+		puntoCercato.successivo = Campo.inizio
+		Campo.inizio = puntoCercato
 	}
 }
 
@@ -150,16 +147,25 @@ func automa(x, y int, eta string) {
 // Ogni ostacolo ha un'adiacenza e ogni punto dell'ostacolo fa parte del campo
 // Assunzione: x_1 < x_2 e y_1 < y_2
 func ostacolo(x0, y0, x1, y1 int) {
-	for i := 0; i < len(Campo); i++ {
-		if (Campo[i].coordinataX <= x1 && Campo[i].coordinataX >= x0) && (Campo[i].coordinataY <= y1 && Campo[i].coordinataY >= y0) {
+	percorrente := Campo.inizio
+	for percorrente != nil && !strings.Contains(percorrente.id, "ostacolo") {
+		if (percorrente.coordinataX <= x1 && percorrente.coordinataX >= x0) && (percorrente.coordinataY <= y1 && percorrente.coordinataY >= y0) {
 			return
 		}
+		percorrente = percorrente.successivo
 	}
 	newOstacolo := new(punto)
 	newOstacolo.coordinataX = x0
 	newOstacolo.coordinataY = y1
 	newOstacolo.id = Sprintf("%d,%d,%d,%d,ostacolo", x0, y0, x1, y1)
-	Campo = append(Campo, newOstacolo)
+	if Campo.fine == nil {
+		Campo.fine = newOstacolo
+		Campo.inizio = newOstacolo
+		return
+	}
+	newOstacolo.precedente = Campo.fine
+	Campo.fine.successivo = newOstacolo
+	Campo.fine = newOstacolo
 }
 
 func richiamo(x, y int, alpha string) {
@@ -167,19 +173,24 @@ func richiamo(x, y int, alpha string) {
 	Sorgente.coordinataX = x
 	Sorgente.coordinataY = y
 	Sorgente.id = alpha
-	for i := 0; i < len(Campo); i++ {
-		if strings.HasPrefix(Campo[i].id, alpha) {
-			Campo[i].richiamo = true
+	percorrente := Campo.inizio
+	for percorrente != nil && !strings.Contains(percorrente.id, "ostacolo") {
+		if strings.HasPrefix(percorrente.id, alpha) {
+			percorrente.richiamo = true
 		}
+		percorrente = percorrente.successivo
 	}
 }
 
 func posizioni(alpha string) {
+	percorrente := new(punto)
 	Println("(")
-	for i := 0; i < len(Campo); i++ {
-		if strings.HasPrefix(Campo[i].id, alpha) {
-			Printf("%s: %d,%d\n", Campo[i].id, Campo[i].coordinataX, Campo[i].coordinataY)
+	percorrente = Campo.inizio
+	for percorrente != nil && !strings.Contains(percorrente.id, "ostacolo") {
+		if strings.HasPrefix(percorrente.id, alpha) {
+			Printf("%s: %d,%d\n", percorrente.id, percorrente.coordinataX, percorrente.coordinataY)
 		}
+		percorrente = percorrente.successivo
 	}
 	Println(")")
 }
@@ -199,7 +210,6 @@ func esistePercorso(x, y int, eta string) {
 	}
 	distanza := calcolaDistanza(percorrente.coordinataX, percorrente.coordinataY, x, y)
 	percorsoEffettuato, passiMancanti := (avanza(percorrente, distanza))
-	// Println(percorsoEffettuato)
 	if percorsoEffettuato.coordinataX == x && percorsoEffettuato.coordinataY == y && passiMancanti == 0 {
 		Println("SI")
 		return
@@ -228,9 +238,6 @@ func avanza(p *punto, passi int) (*punto, int) {
 		contatoreOstacoliY++
 		sX--
 	}
-	// Printf("%d %d\n", conatoreOstacoliX, contatoreOstacoliY)
-	// Println(p)
-	// if p.adiacenza == nil {
 	if p.coordinataX < Sorgente.coordinataX && conatoreOstacoliX >= contatoreOstacoliY {
 		possibilePasso.coordinataX = p.coordinataX + 1
 		passi--
@@ -254,65 +261,24 @@ func avanza(p *punto, passi int) (*punto, int) {
 }
 
 func (*piano) cerca(x, y int, id string) *punto {
-	for i := 0; i < len(Campo); i++ {
-		if (Campo[i].coordinataX == x && Campo[i].coordinataY == y) || Campo[i].id == id {
-			return Campo[i]
+	percorrente := Campo.inizio
+	for percorrente != nil {
+		if (percorrente.coordinataX == x && percorrente.coordinataY == y) || percorrente.id == id {
+			return percorrente
 		}
+		percorrente = percorrente.successivo
 	}
 	return nil
 }
 
-// func (p *punto) adiacenze() {
-// 	var x, y int
-// 	x = p.coordinataX - 1
-// 	y = p.coordinataY - 1
-// 	p.adiacenza = []*punto{}
-
-// 	for y < p.coordinataY+2 {
-// 		for x < p.coordinataX+2 {
-// 			if dentroAreaOstacolo(x, y) {
-// 				Ostacolo := new(punto)
-// 				Ostacolo.coordinataX = x
-// 				Ostacolo.coordinataY = y
-// 				Ostacolo.id = "ostacolo"
-// 				p.adiacenza = append(p.adiacenza, Ostacolo)
-// 				x++
-// 				continue
-// 			}
-// 			puntoAdiacente := Campo.cerca(x, y, "")
-// 			if (puntoAdiacente != nil) && (x != p.coordinataX || y != p.coordinataY) {
-// 				p.adiacenza = append(p.adiacenza, puntoAdiacente)
-// 				puntoAdiacente.adiacenza = append(puntoAdiacente.adiacenza, p)
-// 			}
-// 			x++
-// 		}
-// 		x = p.coordinataX - 1
-// 		y++
-// 	}
-// }
-
-// Rimuove un elemento dalla slice Campo.
-func (*piano) remove(eta string) {
-	for i := 0; i < len(Campo); i++ {
-		if eta == Campo[i].id {
-			if Campo[i].adiacenza == nil {
-				return
-			}
-			for adiacente := 0; adiacente < len(Campo[i].adiacenza); adiacente++ {
-				// Campo[i].adiacenza[adiacente].adiacenze()
-			}
-		}
-	}
-}
-
 func dentroAreaOstacolo(x, y int) bool {
-	for i := len(Campo) - 1; i >= 0; i-- {
-		if strings.Contains(Campo[i].id, "ostacolo") {
-			x0, y0, x1, y1 := estraiCoordinate(Campo[i].id)
-			if (x <= x1 && x >= x0) && (y <= y1 && y >= y0) {
-				return true
-			}
+	percorrente := Campo.fine
+	for percorrente != nil && strings.Contains(percorrente.id, "ostacolo") {
+		x0, y0, x1, y1 := estraiCoordinate(percorrente.id)
+		if (x <= x1 && x >= x0) && (y <= y1 && y >= y0) {
+			return true
 		}
+		percorrente = percorrente.precedente
 	}
 	return false
 }
@@ -352,4 +318,3 @@ func calcolaDistanza(x0, y0, x1, y1 int) int {
 	return (x1 - x0) + (y1 - y0)
 }
 
-// func visitaAdiacenze(possibiliStrade []*punto) *punto {}

@@ -152,6 +152,7 @@ func ostacolo(x0, y0, x1, y1 int) {
 		if (percorrente.coordinataX <= x1 && percorrente.coordinataX >= x0) && (percorrente.coordinataY <= y1 && percorrente.coordinataY >= y0) {
 			return
 		}
+		percorrente = percorrente.successivo
 	}
 	newOstacolo := new(punto)
 	newOstacolo.coordinataX = x0
@@ -160,6 +161,7 @@ func ostacolo(x0, y0, x1, y1 int) {
 	if Campo.fine == nil {
 		Campo.fine = newOstacolo
 		Campo.inizio = newOstacolo
+		return
 	}
 	newOstacolo.precedente = Campo.fine
 	Campo.fine.successivo = newOstacolo
@@ -172,7 +174,7 @@ func richiamo(x, y int, alpha string) {
 	Sorgente.coordinataY = y
 	Sorgente.id = alpha
 	percorrente := Campo.inizio
-	for !strings.Contains(percorrente.id, "ostacolo") {
+	for percorrente != nil && !strings.Contains(percorrente.id, "ostacolo") {
 		if strings.HasPrefix(percorrente.id, alpha) {
 			percorrente.richiamo = true
 		}
@@ -269,24 +271,9 @@ func (*piano) cerca(x, y int, id string) *punto {
 	return nil
 }
 
-// Rimuove un elemento dalla slice Campo.
-// La rumove viene invocata solo con gli automi
-func (*piano) remove(eta string) {
-	// se  il punto da eliminare non è all'inizio del campo faccio in modo che il punotatore venga dereferenziato
-	percorrente := Campo.inizio
-	for percorrente != nil && !strings.Contains(percorrente.id, "ostacolo") {
-		if percorrente.id == eta && percorrente == Campo.inizio {
-			Campo.inizio = Campo.inizio.successivo
-		} else if percorrente.id == eta {
-			percorrente.precedente.successivo = percorrente.successivo
-			percorrente.successivo.precedente = percorrente.precedente
-		}
-	}
-}
-
 func dentroAreaOstacolo(x, y int) bool {
 	percorrente := Campo.fine
-	for strings.Contains(percorrente.id, "ostacolo") {
+	for percorrente != nil && strings.Contains(percorrente.id, "ostacolo") {
 		x0, y0, x1, y1 := estraiCoordinate(percorrente.id)
 		if (x <= x1 && x >= x0) && (y <= y1 && y >= y0) {
 			return true
@@ -330,6 +317,3 @@ func estraiCoordinate(id string) (x0 int, y0 int, x1 int, y1 int) {
 func calcolaDistanza(x0, y0, x1, y1 int) int {
 	return (x1 - x0) + (y1 - y0)
 }
-
-// Solo gli ostacoli stanno alla fine del campo e gli automi all'inizio
-// Se non ci sono automi l'inizio è null così come se non ci sono ostacoli la fine sta a null
