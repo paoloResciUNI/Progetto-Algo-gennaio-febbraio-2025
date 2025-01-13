@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	. "fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -20,6 +21,16 @@ type punto struct {
 type piano struct {
 	inizio *punto
 	fine   *punto
+}
+
+type Richiamati struct {
+	testa *nodoPila
+}
+
+type nodoPila struct {
+	chiamato *punto
+	distanza int
+	prossimo *nodoPila
 }
 
 var Campo piano
@@ -154,6 +165,8 @@ func ostacolo(x0, y0, x1, y1 int) {
 }
 
 func richiamo(x, y int, alpha string) {
+	minDistance := math.MaxInt
+	pilaChiamata := new(Richiamati)
 	Sorgente = new(punto)
 	Sorgente.coordinataX = x
 	Sorgente.coordinataY = y
@@ -162,16 +175,32 @@ func richiamo(x, y int, alpha string) {
 	for percorrente != nil && !strings.Contains(percorrente.id, "ostacolo") {
 		if strings.HasPrefix(percorrente.id, alpha) {
 			percorrente.richiamo = true
-			Printf("%d %d %s %v\n", percorrente.coordinataX, percorrente.coordinataY, percorrente.id, percorrente.richiamo)
-		}
-		if percorrente.richiamo {
-			possibileArrivo, _ := avanza(percorrente, calcolaDistanza(percorrente.coordinataX, percorrente.coordinataY, x, y))
-			if possibileArrivo.coordinataX == x && possibileArrivo.coordinataY == y {
-				percorrente.coordinataX = x
-				percorrente.coordinataY = y
+			distanza := calcolaDistanza(percorrente.coordinataX, percorrente.coordinataY, x, y)
+			possibileAvanzamento, _ := avanza(percorrente, distanza)
+			if possibileAvanzamento.coordinataX == x && possibileAvanzamento.coordinataY == y {
+				if distanza <= minDistance {
+					minDistance = distanza
+				}
+				nodoChiamata := new(nodoPila)
+				nodoChiamata.chiamato = percorrente
+				nodoChiamata.prossimo = pilaChiamata.testa
+				nodoChiamata.distanza = distanza
+				pilaChiamata.testa = nodoChiamata
 			}
 		}
 		percorrente = percorrente.successivo
+	}
+	attraversoPila := pilaChiamata.testa
+	for attraversoPila != nil {
+		if attraversoPila.distanza == minDistance {
+			possibileArrivo, _ := avanza(attraversoPila.chiamato, minDistance)
+			if possibileArrivo.coordinataX == x && possibileArrivo.coordinataY == y {
+				attraversoPila.chiamato.coordinataX = x
+				attraversoPila.chiamato.coordinataY = y
+			}
+		}
+		Println("ciclo", minDistance)
+		attraversoPila = attraversoPila.prossimo
 	}
 }
 
@@ -192,6 +221,7 @@ func esistePercorso(x, y int, eta string) {
 	Sorgente = new(punto)
 	Sorgente.coordinataX = x
 	Sorgente.coordinataY = y
+	Sorgente.id = eta
 	if dentroAreaOstacolo(x, y) {
 		Println("NO")
 		return
@@ -212,30 +242,47 @@ func esistePercorso(x, y int, eta string) {
 }
 
 func avanza(p *punto, passi int) (*punto, int) {
-	var conatoreOstacoliX, contatoreOstacoliY int
-	if passi == 0 {
-		return p, passi
+	var conatoreOstacoliX, contatoreOstacoliY, latoX, latoY int
+	if passi <= 0 {
+		return p, 0
 	}
 	possibilePasso := new(punto)
 	possibilePasso.coordinataX = p.coordinataX
 	possibilePasso.coordinataY = p.coordinataY
 	possibilePasso.id = p.id
 
-	sX := passi
-	sY := passi
-	for possibilePasso.presenzaOstacoloPercorsoX(sY) {
+	if Sorgente.coordinataX < possibilePasso.coordinataX {
+		latoX = possibilePasso.coordinataX - passi
+	} else {
+		latoX = possibilePasso.coordinataX + passi
+	}
+	if Sorgente.coordinataY < possibilePasso.coordinataY {
+		latoY = possibilePasso.coordinataY - passi
+	} else {
+		latoY = possibilePasso.coordinataY + passi
+	}
+	for possibilePasso.presenzaOstacoloPercorsoX(latoY) {
+		// Println("ciclo")
 		conatoreOstacoliX++
-		sY--
+		if latoY < possibilePasso.coordinataY {
+			latoY++
+		} else {
+			latoY--
+		}
 	}
-	for possibilePasso.presenzaOstacoloPercorsoY(sX) {
+	for possibilePasso.presenzaOstacoloPercorsoY(latoX) {
 		contatoreOstacoliY++
-		sX--
+		if latoX < possibilePasso.coordinataX {
+			latoX++
+		} else {
+			latoX--
+		}
 	}
-	if p.coordinataX < Sorgente.coordinataX && conatoreOstacoliX >= contatoreOstacoliY {
+	if p.coordinataX < Sorgente.coordinataX && conatoreOstacoliX >= contatoreOstacoliY && !dentroAreaOstacolo(possibilePasso.coordinataX+1, possibilePasso.coordinataY) {
 		possibilePasso.coordinataX++
 		passi--
 		return avanza(possibilePasso, passi)
-	} else if p.coordinataX > Sorgente.coordinataX && conatoreOstacoliX >= contatoreOstacoliY {
+	} else if p.coordinataX > Sorgente.coordinataX && conatoreOstacoliX >= contatoreOstacoliY && !dentroAreaOstacolo(possibilePasso.coordinataX-1, possibilePasso.coordinataY) {
 		possibilePasso.coordinataX--
 		passi--
 		return avanza(possibilePasso, passi)
@@ -246,9 +293,9 @@ func avanza(p *punto, passi int) (*punto, int) {
 		return avanza(possibilePasso, passi)
 	} else if p.coordinataY > Sorgente.coordinataY {
 		possibilePasso.coordinataY--
+		passi--
 		return avanza(possibilePasso, passi)
 	}
-
 	passi--
 	return avanza(p, passi)
 }
@@ -277,18 +324,34 @@ func dentroAreaOstacolo(x, y int) bool {
 }
 
 func (p *punto) presenzaOstacoloPercorsoX(y int) bool {
-	for i := p.coordinataY; i < y; i++ {
-		if dentroAreaOstacolo(p.coordinataX, i) {
-			return true
+	if p.coordinataY > y {
+		for i := y; i < p.coordinataY; i++ {
+			if dentroAreaOstacolo(p.coordinataX, i) {
+				return true
+			}
+		}
+	} else {
+		for i := p.coordinataY; i < y; i++ {
+			if dentroAreaOstacolo(p.coordinataX, i) {
+				return true
+			}
 		}
 	}
 	return false
 }
 
 func (p *punto) presenzaOstacoloPercorsoY(x int) bool {
-	for i := p.coordinataX; i < x; i++ {
-		if dentroAreaOstacolo(i, p.coordinataY) {
-			return true
+	if p.coordinataX > x {
+		for i := x; i < p.coordinataX; i++ {
+			if dentroAreaOstacolo(i, p.coordinataY) {
+				return true
+			}
+		}
+	} else {
+		for i := p.coordinataX; i < x; i++ {
+			if dentroAreaOstacolo(i, p.coordinataY) {
+				return true
+			}
 		}
 	}
 	return false
@@ -305,5 +368,7 @@ func estraiCoordinate(id string) (x0 int, y0 int, x1 int, y1 int) {
 }
 
 func calcolaDistanza(x0, y0, x1, y1 int) int {
-	return (x1 - x0) + (y1 - y0)
+
+	Distanza := math.Abs(float64(x1-x0)) + math.Abs(float64(y1-y0))
+	return int(Distanza)
 }
