@@ -133,8 +133,6 @@ func automa(x, y int, eta string) {
 	}
 }
 
-// Un ostacolo è un punto in cui non possono esserci automi
-// Ogni ostacolo ha un'adiacenza e ogni punto dell'ostacolo fa parte del campo
 // Assunzione: x_1 < x_2 e y_1 < y_2
 func ostacolo(x0, y0, x1, y1 int) {
 	percorrente := Campo.inizio

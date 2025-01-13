@@ -17,16 +17,13 @@ type punto struct {
 	precedente  *punto
 }
 
-// rappresentazione del grafo che rappresenta il piano
 type piano struct {
 	inizio *punto
 	fine   *punto
 }
 
-// Il camapo dove si muovono gli automi
 var Campo piano
 
-// Il punto da cui viene il richiamo
 var Sorgente *punto
 
 func esegui(p piano, s string) {
@@ -52,12 +49,16 @@ func esegui(p piano, s string) {
 		ostacolo(a, b, c, d)
 	case "p":
 		posizioni(comandi[1])
+	case "r":
+		a, _ := strconv.Atoi(comandi[1])
+		b, _ := strconv.Atoi(comandi[2])
+		richiamo(a, b, comandi[3])
 	case "e":
 		a, _ := strconv.Atoi(comandi[1])
 		b, _ := strconv.Atoi(comandi[2])
 		esistePercorso(a, b, comandi[3])
 	case "f":
-		return
+		os.Exit(0)
 	}
 }
 
@@ -105,9 +106,6 @@ func stato(x, y int) {
 	}
 }
 
-// Aggiunge un automa al campo se le coordinate (x, y) non fanno già parte di un ostacolo, se no non fa nulla
-// Se le coordinate (x, y) non fanno parte di un ostacolo allora controlla se l'automa eta esiste già e in caso affermativo
-// sposta l'automa altrimenti lo crea nuovo.
 func automa(x, y int, eta string) {
 	puntoCercato := Campo.cerca(x, y, eta)
 	if puntoCercato != nil {
@@ -133,9 +131,6 @@ func automa(x, y int, eta string) {
 	}
 }
 
-// Un ostacolo è un punto in cui non possono esserci automi
-// Ogni ostacolo ha un'adiacenza e ogni punto dell'ostacolo fa parte del campo
-// Assunzione: x_1 < x_2 e y_1 < y_2
 func ostacolo(x0, y0, x1, y1 int) {
 	percorrente := Campo.inizio
 	for percorrente != nil && !strings.Contains(percorrente.id, "ostacolo") {
@@ -167,6 +162,14 @@ func richiamo(x, y int, alpha string) {
 	for percorrente != nil && !strings.Contains(percorrente.id, "ostacolo") {
 		if strings.HasPrefix(percorrente.id, alpha) {
 			percorrente.richiamo = true
+			Printf("%d %d %s %v\n", percorrente.coordinataX, percorrente.coordinataY, percorrente.id, percorrente.richiamo)
+		}
+		if percorrente.richiamo {
+			possibileArrivo, _ := avanza(percorrente, calcolaDistanza(percorrente.coordinataX, percorrente.coordinataY, x, y))
+			if possibileArrivo.coordinataX == x && possibileArrivo.coordinataY == y {
+				percorrente.coordinataX = x
+				percorrente.coordinataY = y
+			}
 		}
 		percorrente = percorrente.successivo
 	}
@@ -185,10 +188,10 @@ func posizioni(alpha string) {
 	Println(")")
 }
 
-// La funzione prende in input un punto e il nome di un'automa e restituisce "SI" se esiste un percorso di lunghezza D che va dal punto (x, y)
-// alla sorgente, "NO" altrimenti. Restituisce "NO" se il punto x, y fa parte di un ostacolo.
 func esistePercorso(x, y int, eta string) {
-	richiamo(x, y, eta)
+	Sorgente = new(punto)
+	Sorgente.coordinataX = x
+	Sorgente.coordinataY = y
 	if dentroAreaOstacolo(x, y) {
 		Println("NO")
 		return
@@ -229,20 +232,20 @@ func avanza(p *punto, passi int) (*punto, int) {
 		sX--
 	}
 	if p.coordinataX < Sorgente.coordinataX && conatoreOstacoliX >= contatoreOstacoliY {
-		possibilePasso.coordinataX = p.coordinataX + 1
+		possibilePasso.coordinataX++
 		passi--
 		return avanza(possibilePasso, passi)
 	} else if p.coordinataX > Sorgente.coordinataX && conatoreOstacoliX >= contatoreOstacoliY {
-		possibilePasso.coordinataX = p.coordinataX - 1
+		possibilePasso.coordinataX--
 		passi--
 		return avanza(possibilePasso, passi)
 	}
 	if p.coordinataY < Sorgente.coordinataY {
-		possibilePasso.coordinataY = p.coordinataY + 1
+		possibilePasso.coordinataY++
 		passi--
 		return avanza(possibilePasso, passi)
 	} else if p.coordinataY > Sorgente.coordinataY {
-		possibilePasso.coordinataY = p.coordinataY - 1
+		possibilePasso.coordinataY--
 		return avanza(possibilePasso, passi)
 	}
 
@@ -273,7 +276,6 @@ func dentroAreaOstacolo(x, y int) bool {
 	return false
 }
 
-// La funzione controlla se ci sono ostacoli sullo specifico asse delle x di p
 func (p *punto) presenzaOstacoloPercorsoX(y int) bool {
 	for i := p.coordinataY; i < y; i++ {
 		if dentroAreaOstacolo(p.coordinataX, i) {
@@ -283,7 +285,6 @@ func (p *punto) presenzaOstacoloPercorsoX(y int) bool {
 	return false
 }
 
-// La funzione controlla se ci sono ostacoli sullo specifico asse delle y di p
 func (p *punto) presenzaOstacoloPercorsoY(x int) bool {
 	for i := p.coordinataX; i < x; i++ {
 		if dentroAreaOstacolo(i, p.coordinataY) {
@@ -293,7 +294,6 @@ func (p *punto) presenzaOstacoloPercorsoY(x int) bool {
 	return false
 }
 
-// Questa funzione estrae le coordinate da un ostacolo
 func estraiCoordinate(id string) (x0 int, y0 int, x1 int, y1 int) {
 	coordinate, _ := strings.CutSuffix(id, "ostacolo")
 	slCoordinate := strings.Split(coordinate, ",")

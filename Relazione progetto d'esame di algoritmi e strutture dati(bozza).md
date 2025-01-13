@@ -56,3 +56,4 @@ Il piano nel programma è rappresentato come una variabile globale `Campo` di ti
 - `(p *punto) presenzaOstacoloPercorsoY(x int) bool` : 
 
 ## Esempi di esecuzione e casi limite
+
