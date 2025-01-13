@@ -8,11 +8,6 @@ import (
 	"strings"
 )
 
-// nodo
-// - Se il punto contiene un automa la stringa id ne conterrà il nome.
-// - Se il punto è vuoto allora la stringa srà vuota.
-// - Se il punto fa parte di un ostacolo allora id srà uguale alla stringa "ostacolo"
-// - Il punto è anche un nodo della lista piano
 type punto struct {
 	coordinataX int
 	coordinataY int
@@ -78,8 +73,6 @@ func main() {
 	}
 }
 
-// Si assume che il campo sia già ordinato nel formato corretto:
-// Prima gli automi e poi gli ostacoli
 func stampa() {
 	percorrente := new(punto)
 	Println("(")
@@ -99,7 +92,6 @@ func stampa() {
 	Println("]")
 }
 
-// Questa funzone stampa il contenuto nella posizione (x, y).
 func stato(x, y int) {
 	if dentroAreaOstacolo(x, y) {
 		Println("O")
@@ -116,7 +108,6 @@ func stato(x, y int) {
 // Aggiunge un automa al campo se le coordinate (x, y) non fanno già parte di un ostacolo, se no non fa nulla
 // Se le coordinate (x, y) non fanno parte di un ostacolo allora controlla se l'automa eta esiste già e in caso affermativo
 // sposta l'automa altrimenti lo crea nuovo.
-// Questa funzione deve essere ottimizzata!!
 func automa(x, y int, eta string) {
 	puntoCercato := Campo.cerca(x, y, eta)
 	if puntoCercato != nil {
@@ -125,7 +116,6 @@ func automa(x, y int, eta string) {
 		} else {
 			puntoCercato.coordinataX = x
 			puntoCercato.coordinataY = y
-			// Campo.remove(eta)
 		}
 	} else {
 		puntoCercato = new(punto)
