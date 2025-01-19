@@ -13,7 +13,6 @@ type punto struct {
 	coordinataX int
 	coordinataY int
 	id          string
-	richiamo    bool
 	successivo  *punto
 	precedente  *punto
 }
@@ -174,7 +173,6 @@ func richiamo(x, y int, alpha string) {
 	percorrente := Campo.inizio
 	for percorrente != nil && !strings.Contains(percorrente.id, "ostacolo") {
 		if strings.HasPrefix(percorrente.id, alpha) {
-			percorrente.richiamo = true
 			distanza := calcolaDistanza(percorrente.coordinataX, percorrente.coordinataY, x, y)
 			possibileAvanzamento, _ := avanza(percorrente, distanza)
 			if possibileAvanzamento.coordinataX == x && possibileAvanzamento.coordinataY == y {
@@ -199,7 +197,6 @@ func richiamo(x, y int, alpha string) {
 				attraversoPila.chiamato.coordinataY = y
 			}
 		}
-		Println("ciclo", minDistance)
 		attraversoPila = attraversoPila.prossimo
 	}
 }

@@ -13,20 +13,16 @@ type punto struct {
 	coordinataX int
 	coordinataY int
 	id          string
-	richiamo    bool
 	successivo  *punto
 	precedente  *punto
 }
-
 type piano struct {
 	inizio *punto
 	fine   *punto
 }
-
 type Richiamati struct {
 	testa *nodoPila
 }
-
 type nodoPila struct {
 	chiamato *punto
 	distanza int
@@ -34,7 +30,6 @@ type nodoPila struct {
 }
 
 var Campo piano
-
 var Sorgente *punto
 
 func esegui(p piano, s string) {
@@ -174,7 +169,6 @@ func richiamo(x, y int, alpha string) {
 	percorrente := Campo.inizio
 	for percorrente != nil && !strings.Contains(percorrente.id, "ostacolo") {
 		if strings.HasPrefix(percorrente.id, alpha) {
-			percorrente.richiamo = true
 			distanza := calcolaDistanza(percorrente.coordinataX, percorrente.coordinataY, x, y)
 			possibileAvanzamento, _ := avanza(percorrente, distanza)
 			if possibileAvanzamento.coordinataX == x && possibileAvanzamento.coordinataY == y {
@@ -199,7 +193,6 @@ func richiamo(x, y int, alpha string) {
 				attraversoPila.chiamato.coordinataY = y
 			}
 		}
-		Println("ciclo", minDistance)
 		attraversoPila = attraversoPila.prossimo
 	}
 }
@@ -250,7 +243,6 @@ func avanza(p *punto, passi int) (*punto, int) {
 	possibilePasso.coordinataX = p.coordinataX
 	possibilePasso.coordinataY = p.coordinataY
 	possibilePasso.id = p.id
-
 	if Sorgente.coordinataX < possibilePasso.coordinataX {
 		latoX = possibilePasso.coordinataX - passi
 	} else {
@@ -368,7 +360,6 @@ func estraiCoordinate(id string) (x0 int, y0 int, x1 int, y1 int) {
 }
 
 func calcolaDistanza(x0, y0, x1, y1 int) int {
-
 	Distanza := math.Abs(float64(x1-x0)) + math.Abs(float64(y1-y0))
 	return int(Distanza)
 }
