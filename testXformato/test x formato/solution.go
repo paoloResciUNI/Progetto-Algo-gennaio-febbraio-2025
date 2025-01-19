@@ -20,9 +20,6 @@ type piano struct {
 	inizio *punto
 	fine   *punto
 }
-type Richiamati struct {
-	testa *nodoPila
-}
 type nodoPila struct {
 	chiamato *punto
 	distanza int
@@ -161,7 +158,7 @@ func ostacolo(x0, y0, x1, y1 int) {
 
 func richiamo(x, y int, alpha string) {
 	minDistance := math.MaxInt
-	pilaChiamata := new(Richiamati)
+	pilaChiamata := new(nodoPila)
 	Sorgente = new(punto)
 	Sorgente.coordinataX = x
 	Sorgente.coordinataY = y
@@ -177,14 +174,14 @@ func richiamo(x, y int, alpha string) {
 				}
 				nodoChiamata := new(nodoPila)
 				nodoChiamata.chiamato = percorrente
-				nodoChiamata.prossimo = pilaChiamata.testa
+				nodoChiamata.prossimo = pilaChiamata
 				nodoChiamata.distanza = distanza
-				pilaChiamata.testa = nodoChiamata
+				pilaChiamata = nodoChiamata
 			}
 		}
 		percorrente = percorrente.successivo
 	}
-	attraversoPila := pilaChiamata.testa
+	attraversoPila := pilaChiamata
 	for attraversoPila != nil {
 		if attraversoPila.distanza == minDistance {
 			possibileArrivo, _ := avanza(attraversoPila.chiamato, minDistance)

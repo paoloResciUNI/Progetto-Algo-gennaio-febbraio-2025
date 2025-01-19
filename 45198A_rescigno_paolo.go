@@ -16,16 +16,10 @@ type punto struct {
 	successivo  *punto
 	precedente  *punto
 }
-
 type piano struct {
 	inizio *punto
 	fine   *punto
 }
-
-type Richiamati struct {
-	testa *nodoPila
-}
-
 type nodoPila struct {
 	chiamato *punto
 	distanza int
@@ -33,7 +27,6 @@ type nodoPila struct {
 }
 
 var Campo piano
-
 var Sorgente *punto
 
 func esegui(p piano, s string) {
@@ -165,7 +158,7 @@ func ostacolo(x0, y0, x1, y1 int) {
 
 func richiamo(x, y int, alpha string) {
 	minDistance := math.MaxInt
-	pilaChiamata := new(Richiamati)
+	pilaChiamata := new(nodoPila)
 	Sorgente = new(punto)
 	Sorgente.coordinataX = x
 	Sorgente.coordinataY = y
@@ -181,14 +174,14 @@ func richiamo(x, y int, alpha string) {
 				}
 				nodoChiamata := new(nodoPila)
 				nodoChiamata.chiamato = percorrente
-				nodoChiamata.prossimo = pilaChiamata.testa
+				nodoChiamata.prossimo = pilaChiamata
 				nodoChiamata.distanza = distanza
-				pilaChiamata.testa = nodoChiamata
+				pilaChiamata = nodoChiamata
 			}
 		}
 		percorrente = percorrente.successivo
 	}
-	attraversoPila := pilaChiamata.testa
+	attraversoPila := pilaChiamata
 	for attraversoPila != nil {
 		if attraversoPila.distanza == minDistance {
 			possibileArrivo, _ := avanza(attraversoPila.chiamato, minDistance)
@@ -247,7 +240,6 @@ func avanza(p *punto, passi int) (*punto, int) {
 	possibilePasso.coordinataX = p.coordinataX
 	possibilePasso.coordinataY = p.coordinataY
 	possibilePasso.id = p.id
-
 	if Sorgente.coordinataX < possibilePasso.coordinataX {
 		latoX = possibilePasso.coordinataX - passi
 	} else {
@@ -259,7 +251,6 @@ func avanza(p *punto, passi int) (*punto, int) {
 		latoY = possibilePasso.coordinataY + passi
 	}
 	for possibilePasso.presenzaOstacoloPercorsoX(latoY) {
-		// Println("ciclo")
 		conatoreOstacoliX++
 		if latoY < possibilePasso.coordinataY {
 			latoY++
@@ -365,7 +356,6 @@ func estraiCoordinate(id string) (x0 int, y0 int, x1 int, y1 int) {
 }
 
 func calcolaDistanza(x0, y0, x1, y1 int) int {
-
 	Distanza := math.Abs(float64(x1-x0)) + math.Abs(float64(y1-y0))
 	return int(Distanza)
 }
