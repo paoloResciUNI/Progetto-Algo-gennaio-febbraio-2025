@@ -26,42 +26,44 @@ type nodoPila struct {
 	prossimo *nodoPila
 }
 
-var Campo piano
 var Sorgente *punto
 
 func esegui(p piano, s string) {
-	comandi := strings.Split(s, " ")
-	switch comandi[0] {
-	case "c":
-		Campo = newPiano()
-	case "S":
-		stampa()
-	case "s":
-		a, _ := strconv.Atoi(comandi[1])
-		b, _ := strconv.Atoi(comandi[2])
-		stato(a, b)
-	case "a":
-		a, _ := strconv.Atoi(comandi[1])
-		b, _ := strconv.Atoi(comandi[2])
-		automa(a, b, comandi[3])
-	case "o":
-		a, _ := strconv.Atoi(comandi[1])
-		b, _ := strconv.Atoi(comandi[2])
-		c, _ := strconv.Atoi(comandi[3])
-		d, _ := strconv.Atoi(comandi[4])
-		ostacolo(a, b, c, d)
-	case "p":
-		posizioni(comandi[1])
-	case "r":
-		a, _ := strconv.Atoi(comandi[1])
-		b, _ := strconv.Atoi(comandi[2])
-		richiamo(a, b, comandi[3])
-	case "e":
-		a, _ := strconv.Atoi(comandi[1])
-		b, _ := strconv.Atoi(comandi[2])
-		esistePercorso(a, b, comandi[3])
-	case "f":
-		os.Exit(0)
+	sliceCommands := strings.Split(s, "|")
+	for i := 0; i < len(sliceCommands); i++ {
+		comandi := strings.Split(sliceCommands[i], " ")
+		switch comandi[0] {
+		case "c":
+			p = newPiano()
+		case "S":
+			p.stampa()
+		case "s":
+			a, _ := strconv.Atoi(comandi[1])
+			b, _ := strconv.Atoi(comandi[2])
+			p.stato(a, b)
+		case "a":
+			a, _ := strconv.Atoi(comandi[1])
+			b, _ := strconv.Atoi(comandi[2])
+			p.automa(a, b, comandi[3])
+		case "o":
+			a, _ := strconv.Atoi(comandi[1])
+			b, _ := strconv.Atoi(comandi[2])
+			c, _ := strconv.Atoi(comandi[3])
+			d, _ := strconv.Atoi(comandi[4])
+			p.ostacolo(a, b, c, d)
+		case "p":
+			p.posizioni(comandi[1])
+		case "r":
+			a, _ := strconv.Atoi(comandi[1])
+			b, _ := strconv.Atoi(comandi[2])
+			p.richiamo(a, b, comandi[3])
+		case "e":
+			a, _ := strconv.Atoi(comandi[1])
+			b, _ := strconv.Atoi(comandi[2])
+			p.esistePercorso(a, b, comandi[3])
+		case "f":
+			break
+		}
 	}
 }
 
@@ -71,13 +73,16 @@ func newPiano() piano {
 }
 
 func main() {
+	var Campo piano
+	var comandi string
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
-		esegui(Campo, scanner.Text())
+		comandi += scanner.Text() + "|"
 	}
+	esegui(Campo, comandi)
 }
 
-func stampa() {
+func (Campo *piano) stampa() {
 	percorrente := new(punto)
 	Println("(")
 	percorrente = Campo.inizio
@@ -96,8 +101,8 @@ func stampa() {
 	Println("]")
 }
 
-func stato(x, y int) {
-	if dentroAreaOstacolo(x, y) {
+func (Campo *piano) stato(x, y int) {
+	if Campo.dentroAreaOstacolo(x, y) {
 		Println("O")
 		return
 	}
@@ -109,10 +114,10 @@ func stato(x, y int) {
 	}
 }
 
-func automa(x, y int, eta string) {
+func (Campo *piano) automa(x, y int, eta string) {
 	puntoCercato := Campo.cerca(x, y, eta)
 	if puntoCercato != nil {
-		if strings.Contains(puntoCercato.id, "ostacolo") && !dentroAreaOstacolo(x, y) {
+		if strings.Contains(puntoCercato.id, "ostacolo") && !(Campo.dentroAreaOstacolo(x, y)) {
 			return
 		} else {
 			puntoCercato.coordinataX = x
@@ -134,7 +139,7 @@ func automa(x, y int, eta string) {
 	}
 }
 
-func ostacolo(x0, y0, x1, y1 int) {
+func (Campo *piano) ostacolo(x0, y0, x1, y1 int) {
 	percorrente := Campo.inizio
 	for percorrente != nil && !strings.Contains(percorrente.id, "ostacolo") {
 		if (percorrente.coordinataX <= x1 && percorrente.coordinataX >= x0) && (percorrente.coordinataY <= y1 && percorrente.coordinataY >= y0) {
@@ -156,19 +161,15 @@ func ostacolo(x0, y0, x1, y1 int) {
 	Campo.fine = newOstacolo
 }
 
-func richiamo(x, y int, alpha string) {
+func (Campo *piano) richiamo(x, y int, alpha string) {
 	minDistance := math.MaxInt
 	pilaChiamata := new(nodoPila)
-	Sorgente = new(punto)
-	Sorgente.coordinataX = x
-	Sorgente.coordinataY = y
-	Sorgente.id = alpha
 	percorrente := Campo.inizio
 	for percorrente != nil && !strings.Contains(percorrente.id, "ostacolo") {
 		if strings.HasPrefix(percorrente.id, alpha) {
 			distanza := calcolaDistanza(percorrente.coordinataX, percorrente.coordinataY, x, y)
-			possibileAvanzamento, _ := avanza(percorrente, distanza)
-			if possibileAvanzamento.coordinataX == x && possibileAvanzamento.coordinataY == y {
+			possibileAvanzamCampo, entro := avanza(Campo, percorrente, distanza)
+			if possibileAvanzamCampo.coordinataX == x && possibileAvanzamCampo.coordinataY == y && entro == 0 {
 				if distanza <= minDistance {
 					minDistance = distanza
 				}
@@ -184,7 +185,7 @@ func richiamo(x, y int, alpha string) {
 	attraversoPila := pilaChiamata
 	for attraversoPila != nil {
 		if attraversoPila.distanza == minDistance {
-			possibileArrivo, _ := avanza(attraversoPila.chiamato, minDistance)
+			possibileArrivo, _ := avanza(Campo, attraversoPila.chiamato, minDistance)
 			if possibileArrivo.coordinataX == x && possibileArrivo.coordinataY == y {
 				attraversoPila.chiamato.coordinataX = x
 				attraversoPila.chiamato.coordinataY = y
@@ -194,7 +195,7 @@ func richiamo(x, y int, alpha string) {
 	}
 }
 
-func posizioni(alpha string) {
+func (Campo *piano) posizioni(alpha string) {
 	percorrente := new(punto)
 	Println("(")
 	percorrente = Campo.inizio
@@ -207,12 +208,12 @@ func posizioni(alpha string) {
 	Println(")")
 }
 
-func esistePercorso(x, y int, eta string) {
+func (Campo *piano) esistePercorso(x, y int, eta string) {
 	Sorgente = new(punto)
 	Sorgente.coordinataX = x
 	Sorgente.coordinataY = y
 	Sorgente.id = eta
-	if dentroAreaOstacolo(x, y) {
+	if Campo.dentroAreaOstacolo(x, y) {
 		Println("NO")
 		return
 	}
@@ -222,7 +223,7 @@ func esistePercorso(x, y int, eta string) {
 		return
 	}
 	distanza := calcolaDistanza(percorrente.coordinataX, percorrente.coordinataY, x, y)
-	percorsoEffettuato, passiMancanti := (avanza(percorrente, distanza))
+	percorsoEffettuato, passiMancanti := (avanza(Campo, percorrente, distanza))
 	if percorsoEffettuato.coordinataX == x && percorsoEffettuato.coordinataY == y && passiMancanti == 0 {
 		Println("SI")
 		return
@@ -231,10 +232,7 @@ func esistePercorso(x, y int, eta string) {
 	}
 }
 
-// Questa funzione confronta le posizioni del punto e del sengale che lo attira, alla presenza di ostacoli e in base alla posizione del punto rispetto al segnale
-// decide la posizione per il quale avanzare.
-// Se non ci sono modi di avanzare senza ridurre la distanza l'automa va in stallo.
-func avanza(p *punto, passi int) (*punto, int) {
+func avanza(Campo *piano, p *punto, passi int) (*punto, int) {
 	var conatoreOstacoliX, contatoreOstacoliY, latoX, latoY int
 	if passi <= 0 {
 		return p, 0
@@ -253,7 +251,7 @@ func avanza(p *punto, passi int) (*punto, int) {
 	} else {
 		latoY = possibilePasso.coordinataY + passi
 	}
-	for possibilePasso.presenzaOstacoloPercorsoX(latoY) {
+	for possibilePasso.presenzaOstacoloPercorsoX(Campo, latoY) {
 		conatoreOstacoliX++
 		if latoY < possibilePasso.coordinataY {
 			latoY++
@@ -261,7 +259,7 @@ func avanza(p *punto, passi int) (*punto, int) {
 			latoY--
 		}
 	}
-	for possibilePasso.presenzaOstacoloPercorsoY(latoX) {
+	for possibilePasso.presenzaOstacoloPercorsoY(Campo, latoX) {
 		contatoreOstacoliY++
 		if latoX < possibilePasso.coordinataX {
 			latoX++
@@ -269,29 +267,29 @@ func avanza(p *punto, passi int) (*punto, int) {
 			latoX--
 		}
 	}
-	if p.coordinataX < Sorgente.coordinataX && conatoreOstacoliX >= contatoreOstacoliY && !dentroAreaOstacolo(possibilePasso.coordinataX+1, possibilePasso.coordinataY) {
+	if p.coordinataX < Sorgente.coordinataX && conatoreOstacoliX >= contatoreOstacoliY && !(Campo.dentroAreaOstacolo(possibilePasso.coordinataX+1, possibilePasso.coordinataY)) {
 		possibilePasso.coordinataX++
 		passi--
-		return avanza(possibilePasso, passi)
-	} else if p.coordinataX > Sorgente.coordinataX && conatoreOstacoliX >= contatoreOstacoliY && !dentroAreaOstacolo(possibilePasso.coordinataX-1, possibilePasso.coordinataY) {
+		return avanza(Campo, possibilePasso, passi)
+	} else if p.coordinataX > Sorgente.coordinataX && conatoreOstacoliX >= contatoreOstacoliY && !Campo.dentroAreaOstacolo(possibilePasso.coordinataX-1, possibilePasso.coordinataY) {
 		possibilePasso.coordinataX--
 		passi--
-		return avanza(possibilePasso, passi)
+		return avanza(Campo, possibilePasso, passi)
 	}
 	if p.coordinataY < Sorgente.coordinataY {
 		possibilePasso.coordinataY++
 		passi--
-		return avanza(possibilePasso, passi)
+		return avanza(Campo, possibilePasso, passi)
 	} else if p.coordinataY > Sorgente.coordinataY {
 		possibilePasso.coordinataY--
 		passi--
-		return avanza(possibilePasso, passi)
+		return avanza(Campo, possibilePasso, passi)
 	}
 	passi--
-	return avanza(p, passi)
+	return avanza(Campo, p, passi)
 }
 
-func (*piano) cerca(x, y int, id string) *punto {
+func (Campo *piano) cerca(x, y int, id string) *punto {
 	percorrente := Campo.inizio
 	for percorrente != nil {
 		if (percorrente.coordinataX == x && percorrente.coordinataY == y) || percorrente.id == id {
@@ -302,7 +300,7 @@ func (*piano) cerca(x, y int, id string) *punto {
 	return nil
 }
 
-func dentroAreaOstacolo(x, y int) bool {
+func (Campo *piano) dentroAreaOstacolo(x, y int) bool {
 	percorrente := Campo.fine
 	for percorrente != nil && strings.Contains(percorrente.id, "ostacolo") {
 		x0, y0, x1, y1 := estraiCoordinate(percorrente.id)
@@ -314,16 +312,16 @@ func dentroAreaOstacolo(x, y int) bool {
 	return false
 }
 
-func (p *punto) presenzaOstacoloPercorsoX(y int) bool {
+func (p *punto) presenzaOstacoloPercorsoX(Campo *piano, y int) bool {
 	if p.coordinataY > y {
 		for i := y; i < p.coordinataY; i++ {
-			if dentroAreaOstacolo(p.coordinataX, i) {
+			if Campo.dentroAreaOstacolo(p.coordinataX, i) {
 				return true
 			}
 		}
 	} else {
 		for i := p.coordinataY; i < y; i++ {
-			if dentroAreaOstacolo(p.coordinataX, i) {
+			if Campo.dentroAreaOstacolo(p.coordinataX, i) {
 				return true
 			}
 		}
@@ -331,16 +329,16 @@ func (p *punto) presenzaOstacoloPercorsoX(y int) bool {
 	return false
 }
 
-func (p *punto) presenzaOstacoloPercorsoY(x int) bool {
+func (p *punto) presenzaOstacoloPercorsoY(Campo *piano, x int) bool {
 	if p.coordinataX > x {
 		for i := x; i < p.coordinataX; i++ {
-			if dentroAreaOstacolo(i, p.coordinataY) {
+			if Campo.dentroAreaOstacolo(i, p.coordinataY) {
 				return true
 			}
 		}
 	} else {
 		for i := p.coordinataX; i < x; i++ {
-			if dentroAreaOstacolo(i, p.coordinataY) {
+			if Campo.dentroAreaOstacolo(i, p.coordinataY) {
 				return true
 			}
 		}
