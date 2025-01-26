@@ -270,6 +270,7 @@ func avanza(p *punto, passi int) (*punto, int) {
 		}
 	}
 	if p.coordinataX < Sorgente.coordinataX && conatoreOstacoliX >= contatoreOstacoliY && !dentroAreaOstacolo(possibilePasso.coordinataX+1, possibilePasso.coordinataY) {
+		Println(p)
 		possibilePasso.coordinataX++
 		passi--
 		return avanza(possibilePasso, passi)
@@ -279,6 +280,7 @@ func avanza(p *punto, passi int) (*punto, int) {
 		return avanza(possibilePasso, passi)
 	}
 	if p.coordinataY < Sorgente.coordinataY {
+		Println(p)
 		possibilePasso.coordinataY++
 		passi--
 		return avanza(possibilePasso, passi)
