@@ -241,14 +241,14 @@ func (Campo *Piano) richiamo(x, y int, alpha string) {
 
 // ______________________________________________________________________________________________________________________
 // __________________________Sezione di funzioni e meotdi per il calcolo della presenza di ostacoli_____________________
-func (Campo *Piano) ostacoliPercorso(partenza, arrivo *punto) (vicinanza_O_Ascisse, vicinanza_O_Ordinate int) {
-	// Cerca l'ostacolo più vicino che si appoggia su questo specifico asse delle X.
+func (Campo *Piano) ostacoliPercorso(partenza, arrivo *punto) (distanza_O_Ascisse, distanza_O_Ordinate int) {
+	// Cerca l'ostacolo più vicino che si appoggia verticalmente su questo asse delle X.
 	_, ostacoloVicinoAsseX := partenza.presenzaOstacoloVerticale(Campo, arrivo.coordinataY)
 	if ostacoloVicinoAsseX != nil {
 		if arrivo.coordinataX < partenza.coordinataX {
-			vicinanza_O_Ordinate = partenza.coordinataY - ostacoloVicinoAsseX.coordinataY
+			distanza_O_Ordinate = partenza.coordinataY - ostacoloVicinoAsseX.coordinataY
 		} else {
-			vicinanza_O_Ordinate = ostacoloVicinoAsseX.coordinataY - partenza.coordinataY
+			distanza_O_Ordinate = ostacoloVicinoAsseX.coordinataY - partenza.coordinataY
 		}
 
 	} else {
@@ -281,7 +281,7 @@ func (Campo *Piano) dentroAreaOstacolo(x, y int) bool {
 }
 
 // Cerca un ostacolo sull'asse delle y del punto dove si trova un punto p considerato.
-func (p *punto) presenzaOstacoloVerticale(Campo piano, y int) (bool, *punto) {
+func (p *punto) posizioneOstacoloVerticale(Campo piano, y int) (bool, *punto) {
 	if p.coordinataY > y {
 		for i := p.coordinataY - 1; i >= y; i-- {
 			ostacolo := (*Campo).cercaOstacolo(p.coordinataX, i)
@@ -289,7 +289,7 @@ func (p *punto) presenzaOstacoloVerticale(Campo piano, y int) (bool, *punto) {
 				return true, ostacolo
 			}
 		}
-	} else {
+	} else if p.coordinataY < y {
 		for i := p.coordinataY + 1; i < y; i++ {
 			ostacolo := (*Campo).cercaOstacolo(p.coordinataX, i)
 			if ostacolo != nil {
@@ -301,7 +301,7 @@ func (p *punto) presenzaOstacoloVerticale(Campo piano, y int) (bool, *punto) {
 }
 
 // cerca l'ostacolo più vicino sull'asse delle x dell'automa che va verso la sorgente del segnale
-func (p *punto) presenzaOstacoloOrizzontale(Campo piano, x int) (bool, *punto) {
+func (p *punto) posizioneOstacoloOrizzontale(Campo piano, x int) (bool, *punto) {
 	if p.coordinataX > x {
 		for i := p.coordinataX - 1; i >= x; i-- {
 			ostacolo := (*Campo).cercaOstacolo(i, p.coordinataY)
@@ -309,7 +309,7 @@ func (p *punto) presenzaOstacoloOrizzontale(Campo piano, x int) (bool, *punto) {
 				return true, ostacolo
 			}
 		}
-	} else {
+	} else if p.coordinataX < x {
 		for i := p.coordinataX + 1; i < x; i++ {
 			ostacolo := (*Campo).cercaOstacolo(i, p.coordinataY)
 			if ostacolo != nil {
