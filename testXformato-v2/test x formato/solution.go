@@ -29,7 +29,9 @@ type nodoPila struct {
 }
 
 func esegui(p piano, s string) {
+	Println(s)
 	comandi := strings.Split(s, " ")
+	Println(comandi)
 	switch comandi[0] {
 	case "c":
 		P := newPiano()
@@ -58,6 +60,7 @@ func esegui(p piano, s string) {
 		b, _ := strconv.Atoi(comandi[2])
 		(*p).richiamo(a, b, comandi[3])
 	case "e":
+		Println(comandi[1])
 		a, _ := strconv.Atoi(comandi[1])
 		b, _ := strconv.Atoi(comandi[2])
 		(*p).esistePercorso(a, b, comandi[3])
@@ -76,7 +79,6 @@ func main() {
 	Println(&Campo)
 }
 
-// __________________________Sezione di funzioni e metodi per l'osservazione del campo___________________________________________
 func (Campo Piano) stampa() {
 	percorrente := new(punto)
 	Println("(")
@@ -241,7 +243,7 @@ func (Campo *Piano) richiamo(x, y int, alpha string) {
 // __________________________Sezione di funzioni e meotdi per il calcolo della presenza di ostacoli_____________________
 func (Campo *Piano) ostacoliPercorso(partenza, arrivo *punto) (vicinanza_O_Ascisse, vicinanza_O_Ordinate int) {
 	// Cerca l'ostacolo più vicino che si appoggia su questo specifico asse delle X.
-	_, ostacoloVicinoAsseX := partenza.presenzaOstacoloPercorsoX(Campo, arrivo.coordinataY)
+	_, ostacoloVicinoAsseX := partenza.presenzaOstacoloVerticale(Campo, arrivo.coordinataY)
 	if ostacoloVicinoAsseX != nil {
 		if arrivo.coordinataX < partenza.coordinataX {
 			vicinanza_O_Ordinate = partenza.coordinataY - ostacoloVicinoAsseX.coordinataY
@@ -252,7 +254,7 @@ func (Campo *Piano) ostacoliPercorso(partenza, arrivo *punto) (vicinanza_O_Ascis
 	} else {
 		vicinanza_O_Ordinate = 0
 	}
-	_, ostacoloVicinoAsseY := partenza.presenzaOstacoloPercorsoY(Campo, arrivo.coordinataX)
+	_, ostacoloVicinoAsseY := partenza.presenzaOstacoloOrizzontale(Campo, arrivo.coordinataX)
 	if ostacoloVicinoAsseY != nil {
 		if arrivo.coordinataY < partenza.coordinataY {
 			vicinanza_O_Ascisse = partenza.coordinataX - ostacoloVicinoAsseY.coordinataX
@@ -278,7 +280,8 @@ func (Campo *Piano) dentroAreaOstacolo(x, y int) bool {
 	return false
 }
 
-func (p *punto) presenzaOstacoloPercorsoX(Campo piano, y int) (bool, *punto) {
+// Cerca un ostacolo sull'asse delle y del punto dove si trova un punto p considerato.
+func (p *punto) presenzaOstacoloVerticale(Campo piano, y int) (bool, *punto) {
 	if p.coordinataY > y {
 		for i := p.coordinataY - 1; i >= y; i-- {
 			ostacolo := (*Campo).cercaOstacolo(p.coordinataX, i)
@@ -297,7 +300,8 @@ func (p *punto) presenzaOstacoloPercorsoX(Campo piano, y int) (bool, *punto) {
 	return false, nil
 }
 
-func (p *punto) presenzaOstacoloPercorsoY(Campo piano, x int) (bool, *punto) {
+// cerca l'ostacolo più vicino sull'asse delle x dell'automa che va verso la sorgente del segnale
+func (p *punto) presenzaOstacoloOrizzontale(Campo piano, x int) (bool, *punto) {
 	if p.coordinataX > x {
 		for i := p.coordinataX - 1; i >= x; i-- {
 			ostacolo := (*Campo).cercaOstacolo(i, p.coordinataY)
@@ -352,6 +356,9 @@ func avanza(Campo piano, p *punto, Sorgente *punto, passi int) (*punto, int) {
 		possibilePasso = (*Campo).forwardingY(possibilePasso, Sorgente)
 	} else if p.coordinataY > Sorgente.coordinataY {
 		possibilePasso = (*Campo).forwardingY(possibilePasso, Sorgente)
+	}
+	if p.coordinataX == possibilePasso.coordinataX && p.coordinataY == possibilePasso.coordinataY {
+		return possibilePasso, passi
 	}
 	passi--
 	return avanza(Campo, possibilePasso, Sorgente, passi)
@@ -443,17 +450,19 @@ func (Campo *Piano) cercaOstacolo(x int, y int) *punto {
 	for percorrente != nil && strings.Contains(percorrente.id, "ostacolo") {
 		if Campo.dentroAreaOstacolo(x, y) {
 			return percorrente
-		}
 		percorrente = percorrente.precedente
 	}
 	return nil
 }
 
 func (Campo *Piano) cerca(x, y int, id string) *punto {
-	percorrente := Campo.inizio
-	for percorrente != nil {
-		if (percorrente.coordinataX == x && percorrente.coordinataY == y) || percorrente.id == id {
-			return percorrente
+	percorrente := Campo.fine
+	for percorrente != nil && strings.Contains(percorrente.id, "ostacolo") {
+		x0, y0, x1, y1 := estraiCoordinate(percorrente.id)
+		if (x <= x1 && x >= x0) && (y <= y1 && y >= y0) {
+			return true
+		percorrente = percorrente.precedente
+		return percorrente
 		}
 		percorrente = percorrente.successivo
 	}
