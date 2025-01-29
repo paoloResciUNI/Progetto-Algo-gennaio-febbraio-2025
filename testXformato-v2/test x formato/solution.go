@@ -240,7 +240,7 @@ func (Campo *Piano) ostacoliPercorso(partenza, arrivo *punto) (distanza_O_Asciss
 		_, y0, _, y1 := estraiCoordinate(ostacoloVicino.id)
 		if arrivo.coordinataY < partenza.coordinataY {
 			distanza_O_Ordinate = calcolaDistanza(partenza.coordinataX, partenza.coordinataY, partenza.coordinataX, y1)
-		} else {
+		} else if arrivo.coordinataY > partenza.coordinataY {
 			distanza_O_Ordinate = calcolaDistanza(partenza.coordinataX, partenza.coordinataY, partenza.coordinataX, y0)
 		}
 	} else {
@@ -255,9 +255,8 @@ func (Campo *Piano) ostacoliPercorso(partenza, arrivo *punto) (distanza_O_Asciss
 			distanza_O_Ascisse = calcolaDistanza(partenza.coordinataX, partenza.coordinataY, x0, partenza.coordinataY)
 		}
 	} else {
-		distanza_O_Ascisse = calcolaDistanza(partenza.coordinataX, partenza.coordinataY, arrivo.coordinataX, partenza.coordinataX)
+		distanza_O_Ascisse = calcolaDistanza(partenza.coordinataX, partenza.coordinataY, arrivo.coordinataX, partenza.coordinataY)
 	}
-	Println(distanza_O_Ascisse, "___________", distanza_O_Ordinate)
 	return
 }
 
@@ -338,25 +337,19 @@ func avanza(Campo piano, p *punto, Sorgente *punto, passi int) (*punto, int) {
 	possibilePasso.coordinataY = p.coordinataY
 	possibilePasso.id = p.id
 	distanzaOrizzontaleO, distanzaVerticaleO = (*Campo).ostacoliPercorso(possibilePasso, Sorgente)
-	Println("DISTANZA VERIVALE", distanzaVerticaleO, "    ", distanzaOrizzontaleO, "DISTANZA ORIZZONTALE")
 	if distanzaVerticaleO < distanzaOrizzontaleO {
-		Println("PRIMA", possibilePasso, "FORWARD X")
 		possibilePasso = (*Campo).forwardingX(possibilePasso, Sorgente)
-		Println("DOPO", possibilePasso, "FORWARD X")
 	} else if distanzaOrizzontaleO == distanzaVerticaleO && p.coordinataX < Sorgente.coordinataX && !(*Campo).dentroAreaOstacolo(p.coordinataX+1, p.coordinataY) {
 		possibilePasso.coordinataX++
 	} else if distanzaOrizzontaleO == distanzaVerticaleO && p.coordinataX > Sorgente.coordinataX && !(*Campo).dentroAreaOstacolo(p.coordinataX-1, p.coordinataY) {
 		possibilePasso.coordinataX--
 	} else if distanzaVerticaleO > distanzaOrizzontaleO {
-		Println("Primaaa", possibilePasso, "XSSS")
 		possibilePasso = (*Campo).forwardingY(possibilePasso, Sorgente)
-		Println("DOPOOO", possibilePasso, "XDDD")
 	}
 	if p.coordinataX == possibilePasso.coordinataX && p.coordinataY == possibilePasso.coordinataY {
 		return possibilePasso, passi
 	}
 	passi--
-	Println("AAAAAAA", possibilePasso, "AAAAAAA")
 	return avanza(Campo, possibilePasso, Sorgente, passi)
 }
 
@@ -423,9 +416,9 @@ func (Campo *Piano) forwardingY(start *punto, destination *punto) *punto {
 		return &forward
 	}
 	forward.coordinataX = start.coordinataX
-	_, osostacoloVicino := forward.posizioneOstacoloVerticale(Campo, destination.coordinataY)
-	if osostacoloVicino != nil {
-		_, y0, _, y1 := estraiCoordinate(osostacoloVicino.id)
+	_, ostacoloVicino = start.posizioneOstacoloVerticale(Campo, destination.coordinataY)
+	if ostacoloVicino != nil {
+		_, y0, _, y1 := estraiCoordinate(ostacoloVicino.id)
 		if start.coordinataY < destination.coordinataY {
 			forward.coordinataY = y0 - 1
 		} else if start.coordinataY > destination.coordinataY {
@@ -434,7 +427,8 @@ func (Campo *Piano) forwardingY(start *punto, destination *punto) *punto {
 	} else {
 		forward.coordinataY = destination.coordinataY
 	}
-	_, ostacoloVicino = destination.posizioneOstacoloOrizzontale(Campo, destination.coordinataX)
+	_, ostacoloVicino = forward.posizioneOstacoloOrizzontale(Campo, destination.coordinataX)
+	Println("sdasda", ostacoloVicino, "csdcscc")
 	if ostacoloVicino != nil {
 		var puntoN, puntoS int
 		_, y0, _, y1 := estraiCoordinate(ostacoloVicino.id)
@@ -447,7 +441,6 @@ func (Campo *Piano) forwardingY(start *punto, destination *punto) *punto {
 		}
 		return &forward
 	}
-	Println("HHHHHHHH", forward, "HHHHHHHH")
 	return &forward
 }
 
@@ -456,6 +449,7 @@ func (Campo *Piano) cercaOstacolo(x int, y int) *punto {
 	for percorrente != nil && strings.Contains(percorrente.id, "ostacolo") {
 		x0, y0, x1, y1 := estraiCoordinate(percorrente.id)
 		if (x <= x1 && x >= x0) && (y <= y1 && y >= y0) {
+			Println(percorrente.id)
 			return percorrente
 		}
 		percorrente = percorrente.precedente
