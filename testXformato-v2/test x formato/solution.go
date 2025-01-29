@@ -29,9 +29,7 @@ type nodoPila struct {
 }
 
 func esegui(p piano, s string) {
-	Println(s)
 	comandi := strings.Split(s, " ")
-	Println(comandi)
 	switch comandi[0] {
 	case "c":
 		P := newPiano()
@@ -60,7 +58,6 @@ func esegui(p piano, s string) {
 		b, _ := strconv.Atoi(comandi[2])
 		(*p).richiamo(a, b, comandi[3])
 	case "e":
-		Println(comandi[1])
 		a, _ := strconv.Atoi(comandi[1])
 		b, _ := strconv.Atoi(comandi[2])
 		(*p).esistePercorso(a, b, comandi[3])
@@ -148,8 +145,6 @@ func (Campo *Piano) esistePercorso(x, y int, eta string) {
 	}
 }
 
-// ______________________________________________________________________________________________________________________
-// __________________________Sezione di funzioni e metodi per la manipolazione del campo_____________________________________
 func newPiano() piano {
 	var nuovPiano Piano
 	return &nuovPiano
@@ -239,26 +234,22 @@ func (Campo *Piano) richiamo(x, y int, alpha string) {
 	}
 }
 
-// ______________________________________________________________________________________________________________________
-// __________________________Sezione di funzioni e meotdi per il calcolo della presenza di ostacoli_____________________
 func (Campo *Piano) ostacoliPercorso(partenza, arrivo *punto) (distanza_O_Ascisse, distanza_O_Ordinate int) {
-	// Cerca l'ostacolo più vicino che si appoggia verticalmente su questo asse delle X.
 	_, ostacoloVicino := partenza.posizioneOstacoloVerticale(Campo, arrivo.coordinataY)
 	if ostacoloVicino != nil {
 		_, y0, _, y1 := estraiCoordinate(ostacoloVicino.id)
-		if arrivo.coordinataX < partenza.coordinataX {
+		if arrivo.coordinataY < partenza.coordinataY {
 			distanza_O_Ordinate = calcolaDistanza(partenza.coordinataX, partenza.coordinataY, partenza.coordinataX, y1)
 		} else {
 			distanza_O_Ordinate = calcolaDistanza(partenza.coordinataX, partenza.coordinataY, partenza.coordinataX, y0)
 		}
-
 	} else {
 		distanza_O_Ordinate = calcolaDistanza(partenza.coordinataX, partenza.coordinataY, partenza.coordinataX, arrivo.coordinataY)
 	}
 	_, ostacoloVicino = partenza.posizioneOstacoloOrizzontale(Campo, arrivo.coordinataX)
 	if ostacoloVicino != nil {
 		x0, _, x1, _ := estraiCoordinate(ostacoloVicino.id)
-		if arrivo.coordinataY < partenza.coordinataY {
+		if arrivo.coordinataX < partenza.coordinataX {
 			distanza_O_Ascisse = calcolaDistanza(partenza.coordinataX, partenza.coordinataY, x1, partenza.coordinataY)
 		} else {
 			distanza_O_Ascisse = calcolaDistanza(partenza.coordinataX, partenza.coordinataY, x0, partenza.coordinataY)
@@ -266,6 +257,7 @@ func (Campo *Piano) ostacoliPercorso(partenza, arrivo *punto) (distanza_O_Asciss
 	} else {
 		distanza_O_Ascisse = calcolaDistanza(partenza.coordinataX, partenza.coordinataY, arrivo.coordinataX, partenza.coordinataX)
 	}
+	Println(distanza_O_Ascisse, "___________", distanza_O_Ordinate)
 	return
 }
 
@@ -331,8 +323,6 @@ func estraiCoordinate(id string) (x0 int, y0 int, x1 int, y1 int) {
 	return
 }
 
-// ______________________________________________________________________________________________________________________
-// __________________________Sezione di funzioni e metodi di supporto per le operazioni di manipolazione e osservazione sul campo____________________________________
 func calcolaDistanza(x0, y0, x1, y1 int) int {
 	Distanza := math.Abs(float64(x1-x0)) + math.Abs(float64(y1-y0))
 	return int(Distanza)
@@ -347,39 +337,34 @@ func avanza(Campo piano, p *punto, Sorgente *punto, passi int) (*punto, int) {
 	possibilePasso.coordinataX = p.coordinataX
 	possibilePasso.coordinataY = p.coordinataY
 	possibilePasso.id = p.id
-	distanzaVerticaleO, distanzaOrizzontaleO = (*Campo).ostacoliPercorso(Sorgente, possibilePasso)
+	distanzaOrizzontaleO, distanzaVerticaleO = (*Campo).ostacoliPercorso(possibilePasso, Sorgente)
+	Println("DISTANZA VERIVALE", distanzaVerticaleO, "    ", distanzaOrizzontaleO, "DISTANZA ORIZZONTALE")
 	if distanzaVerticaleO < distanzaOrizzontaleO {
+		Println("PRIMA", possibilePasso, "FORWARD X")
 		possibilePasso = (*Campo).forwardingX(possibilePasso, Sorgente)
+		Println("DOPO", possibilePasso, "FORWARD X")
 	} else if distanzaOrizzontaleO == distanzaVerticaleO && p.coordinataX < Sorgente.coordinataX && !(*Campo).dentroAreaOstacolo(p.coordinataX+1, p.coordinataY) {
 		possibilePasso.coordinataX++
 	} else if distanzaOrizzontaleO == distanzaVerticaleO && p.coordinataX > Sorgente.coordinataX && !(*Campo).dentroAreaOstacolo(p.coordinataX-1, p.coordinataY) {
 		possibilePasso.coordinataX--
-	} else {
+	} else if distanzaVerticaleO > distanzaOrizzontaleO {
+		Println("Primaaa", possibilePasso, "XSSS")
 		possibilePasso = (*Campo).forwardingY(possibilePasso, Sorgente)
-	}
-	if p.coordinataX == possibilePasso.coordinataX && p.coordinataY == possibilePasso.coordinataY {
-		return possibilePasso, passi
+		Println("DOPOOO", possibilePasso, "XDDD")
 	}
 	if p.coordinataX == possibilePasso.coordinataX && p.coordinataY == possibilePasso.coordinataY {
 		return possibilePasso, passi
 	}
 	passi--
+	Println("AAAAAAA", possibilePasso, "AAAAAAA")
 	return avanza(Campo, possibilePasso, Sorgente, passi)
 }
 
-// start è il punto da dove parte il forwarding e destination è il segnale.
-// Il metodo deve restituire il punto nel quale si è mosso l'automa dopo il forwarding. Cioè dopo aver fatto i calcoli
-// sui peercorsi possibili dell'avanzamento, o meglio: se dopo il forwarding l'automa si trova bloccato da un ostacolo allora l'automa si muovarà
-// sul punto subito dopo il vertice che si avvicina al sugnale senza aumentare la distanza di manattan.
-// Con forwardX assumo già che dovrò fare il forwarding sull'asse X.
-// Mi muovo sull'asse delle X.
 func (Campo *Piano) forwardingX(start *punto, destination *punto) *punto {
 	var forward punto
 	_, ostacoloVicino := start.posizioneOstacoloVerticale(Campo, destination.coordinataY)
 	if ostacoloVicino != nil {
 		var puntoE, puntoO int
-		// Clcolo la distanza di tutti i verici dall'automa e dal segnale.
-		// Questo mi serve per capire quale vertice si avvicina di più al segnale restando comunque vicino all'automa.
 		x0, _, x1, _ := estraiCoordinate(ostacoloVicino.id)
 		puntoE = calcolaDistanza(destination.coordinataX, destination.coordinataY, x1, destination.coordinataY)
 		puntoO = calcolaDistanza(destination.coordinataX, destination.coordinataY, x0, destination.coordinataY)
@@ -462,13 +447,15 @@ func (Campo *Piano) forwardingY(start *punto, destination *punto) *punto {
 		}
 		return &forward
 	}
+	Println("HHHHHHHH", forward, "HHHHHHHH")
 	return &forward
 }
 
 func (Campo *Piano) cercaOstacolo(x int, y int) *punto {
 	percorrente := Campo.fine
 	for percorrente != nil && strings.Contains(percorrente.id, "ostacolo") {
-		if Campo.dentroAreaOstacolo(x, y) {
+		x0, y0, x1, y1 := estraiCoordinate(percorrente.id)
+		if (x <= x1 && x >= x0) && (y <= y1 && y >= y0) {
 			return percorrente
 		}
 		percorrente = percorrente.precedente
@@ -486,6 +473,3 @@ func (Campo *Piano) cerca(x, y int, id string) *punto {
 	}
 	return nil
 }
-
-// Aggiungere un metodo di forwarding che va, quando ci snono ostacoli da entrambe le parti, verso il verice più vicino alla sorgente del segnale ma verso la direzione dell'automa.
-// Aggiungere il controllo: Prima del forwarding controllare se ci sono percorsi liberi che riducono la distanza dalla sorgente del segnale. Altrimenti non fare il forwarding ed esci dalla funzione
