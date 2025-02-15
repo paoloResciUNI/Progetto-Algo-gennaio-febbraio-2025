@@ -1,14 +1,8 @@
-# Paolo Rescigno
-
-**Numero di matricola: 45198A**
-
-## Relazione progetto d'esame di algoritmi e strutture dati
+# Relazione progetto d'esame di algoritmi e strutture dati
 
 ### Introduzione
 
-Il progetto implementa un sistema per la gestione del movimento di automi puntiformi su un piano, rispettando vincoli di ostacoli e segnali di richiamo. L'obiettivo è studiare il comportamento degli automi in un contesto dove vi sono ostacoli e richiami che definiscono un percorso minimo che l'automa dovrà intraprendere, se questo esiste. I movimenti possibili di un'automa in posizione ad un richiamo di posizione devono essere compresi nella distanza:
-
----
+Il progetto implementa un sistema per la gestione del movimento di automi puntiformi su un piano, rispettando vincoli di ostacoli e segnali di richiamo. L'obiettivo è studiare il comportamento degli automi in un contesto dove vi sono ostacoli e richiami che definiscono un percorso minimo che l'automa dovrà intraprendere, se questo esiste. I movimenti possibili di un'automa in posizione $A(x_A, y_A)$ ad un richiamo di posizione $R(x_R, y_R)$ devono essere compresi nella distanza $D(A, R) = |x_R - x_A|+|y_R-y_A|$.
 
 ### Strutture dati e scelte progettuali
 
@@ -16,49 +10,50 @@ Per la rappresentazione del piano si è utilizzata una **lista doppiamente conca
 
 #### Strutture dati principali
 
-- **punto**: rappresenta un nodo del piano, contenente coordinate , un identificativo (**id**) e riferimenti al nodo precedente e successivo.
-- **piano**: alias di un tipo puntatore ad una variabile **Piano**.
-- **Piano**: struttura principale che mantiene riferimenti ai nodi iniziale e finale della lista doppiamente concatenata.
-- **nodoPila**: usato per gestire le operazioni di richiamo degli automi, memorizzando i candidati allo spostamento.
+- **`punto`**: rappresenta un nodo del piano, contenente le coordinate `(x, y)`, un identificativo `id` e i riferimenti al nodo precedente e successivo.
+- **`Piano`**: struttura principale che mantiene riferimenti ai nodi iniziale e finale della lista doppiamente concatenata.
+- **`piano`**: alias di un tipo puntatore ad una variabile `Piano`.
+- **`nodoPila`**: usato per gestire le operazioni di richiamo degli automi, memorizzando i candidati allo spostamento. Questa struttura è usata solamente nel metodo `richiamo`.
 
 Questa modellazione consente un accesso rapido agli automi e agli ostacoli, facilitando operazioni come la ricerca, l'inserimento e la gestione dei percorsi.
 
----
+### Implementazione delle operazioni 
 
-### Implementazione delle operazioni
+Le operazioni implementate nel programma seguono le specifiche fornite. Di seguito una descrizione delle principali operazioni.
+ 
+>*P.S.: Qui di seguito è presente solamente la descrizione delle principali operazioni implementate. L'implementazione vera e propria è descritta dettagliatamente nella sezione relativa a metodi e funzioni*.
 
 #### Creazione e gestione del piano
 
-- `newPiano()`: crea un nuovo piano vuoto, eliminando i dati esistenti.
-- `stampa()`: stampa la lista degli automi e degli ostacoli secondo il formato richiesto.
-- `stato(x, y)`: restituisce il contenuto della posizione  
-  **(A per automi, O per ostacoli, E per posizioni vuote)**.
+- **`crea()`**: crea un nuovo piano vuoto. Se vi era già un piano vengono eliminati i dati esistenti. In particolare vengono assegnati due puntatori vuoti al campo `inizio` e al campo `fine` del piano esistente. L'operazione `crea()` è impleemntata grazie alla funzione `newPiano()`.
+- **`stampa()`**: stampa la lista degli automi e degli ostacoli secondo il formato output richiesto. Questa operazione è implementata dal metodo `stampa()`.
+- **`stato(x, y)`**: restituisce il contenuto della posizione `(x, y)` (`A` per automi, `O` per ostacoli, `E` per posizioni vuote). Questa operazione è implemenata dal metodo `stato(x, y int)`.
+- **`posizioni(alpha)`**: stampa la posizione degli automi che nell'id hanno prefisso `alpha`. L'operazione è implementata dal metodo `posizioni(alpha string)`.
 
 #### Inserimento e gestione di automi e ostacoli
 
-- `automa(x, y, eta)`: posiziona un nuovo automa o riposiziona uno esistente.
-- `ostacolo(x0, y0, x1, y1)`: aggiunge un nuovo ostacolo se non vi sono automi nella sua area.
+- **`automa(x, y, eta)`**: permette di posizionare un nuovo automa o di riposizionarne uno già presente. Infatti se l'automa `eta` esiste già viene riposizionato in `(x, y)`. Questa operazione viene implementata dal metodo `automa(x, y int, eta string)`.
+- **`ostacolo(x0, y0, x1, y1)`**: aggiunge un nuovo ostacolo se non vi sono automi nella sua area. L'ostacolo viene distinto dagli automi per il suo `id`. All'interno dell'`id` dell'ostacolo vengono infatti salvate: le coordinate del punto più in basso a sinistra e del punto più in alto a destra seguite dalla stringa `"ostacolo"`. L'operazione di inserimento degli ostacoli all'interno del piano è implementata dal metodo `ostacolo(x0, y0, x1, y1)`.
 
 #### Movimenti e richiami
 
-- `richiamo(x, y, alpha)`: emette un segnale che richiama gli automi compatibili verso .
-- `esistePercorso(x, y, eta)`: verifica se esiste un percorso libero minimo da un automa alla destinazione .
+- **`richiamo(x, y, alpha)`**: emette un segnale che richiama gli automi con prefisso `alpha` verso il punto `(x, y)`. Gli automi si spostano solatnto se hanno distanza $D$ minore rispetto agli altri automi richiamati e se il loro percorso non è bloccatto da ostacoli. Questa operazione è implementata dal metodo `richiamo(x, y int, alpha string)`.
+- **`esistePercorso(x, y, eta)`**: verifica se esiste un percorso libero di distanza minima da un'automa alla destinazione. Se il percorso esiste viene stampato a schermo `SI` altrimenti `NO`. L'operazione `esistePercorso(x, y, eta)` è implementata dal metodo `esistePercorso(x, y int, eta string)`.
 
----
+### Funzioni e metodi principali
 
-### Funzioni principali
+- **`esegui(p piano, s string)`**: interpreta ed esegue i comandi ricevuti da standard input. Permette di eseguire le operazioni precedentemente descritte.
+- **`newPiano() piano`**: inizializza una nuova struttura `piano`.
+- **`(Piano)stampa()`**: stampa automi e ostacoli. Scorre la lista dall'inizio per stampare gli automi mentre per gli ostacoli scorre la lista dalla fine. 
+- **`(Piano)stato(x, y int)`**: restituisce informazioni sulla posizione `(x, y)`. Questo metodo scorre la lista dall'inizio e controlla prima che le coordinate `(x, y)` contengano un'automa (in questo caso viene stampato su standard output il carattere `A`), poi controlla se faccia parte dell'area di un ostacolo (in questo caso viene stampato su standard output il carattere `O`) e se nessuno dei casi precedenti si è verificato, allora viene stampato su standard output il carattere `E`.  
+- **`(*Piano)posizioni(alpha string)`**: stampa le posizioni degli automi con prefisso `alpha`.
+- **`(Campo *Piano)automa(x, y int, eta string)`**: aggiunge un'automa o ne modifica la posizione.
+- **`(Campo *Piano)ostacolo(x0, y0, x1, y1 int)`**: aggiunge un ostacolo.
+- **`(Campo *Piano)richiamo(x, y int, alpha string)`**: gestisce il richiamo degli automi compatibili.
+- **`(Campo *Piano)esistePercorso(x, y int, eta string)`**: verifica se un'automa `eta` ha un percorso libero di distanza $D$ verso il punto `(x, y)`.
 
-- `esegui(p piano, s string)`: interpreta ed esegue i comandi ricevuti.
-- `newPiano() piano`: inizializza una nuova struttura **Piano**.
-- `stampa()`: stampa automi e ostacoli.
-- `stato(x, y)`: restituisce informazioni sulla posizione .
-- `posizioni(alpha)`: stampa le posizioni degli automi con prefisso **alpha**.
-- `automa(x, y, eta)`: aggiunge o modifica la posizione di un automa.
-- `ostacolo(x0, y0, x1, y1)`: aggiunge un ostacolo.
-- `richiamo(x, y, alpha)`: gestisce il richiamo degli automi compatibili.
-- `esistePercorso(x, y, eta)`: verifica se un automa ha un percorso libero verso .
+### Metodi e funzioni secondarie 
 
----
 
 ### Analisi delle prestazioni
 
@@ -69,7 +64,6 @@ L'uso di una **lista doppiamente concatenata** consente di mantenere basso l'uso
 - **Verifica di percorsi liberi**: tempo peggiore .
 - **Gestione dei richiami**: tempo peggiore .
 
----
 
 ### Esempi di esecuzione
 
@@ -133,8 +127,6 @@ p 1
 11001: 16,1
 )
 ```
-
----
 
 ### Conclusione
 
