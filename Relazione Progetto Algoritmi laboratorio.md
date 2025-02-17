@@ -1,4 +1,4 @@
-# Relazione progetto d'esame di algoritmi e strutture dati
+# Relazione progetto d'esame di algoritmi e strutture dati (revisione)
 
 ### Introduzione
 

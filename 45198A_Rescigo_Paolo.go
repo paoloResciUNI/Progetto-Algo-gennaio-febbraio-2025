@@ -14,18 +14,19 @@ type punto struct {
 	coordinataY int
 	id          string
 	successivo  *punto
-	precedente  *punto
 }
 
 type piano *Piano
+
 type Piano struct {
-	inizio *punto
-	fine   *punto
+	automi   *punto
+	ostacoli *punto
 }
-type nodoPila struct {
+
+type elementoPila struct {
 	chiamato *punto
 	distanza int
-	prossimo *nodoPila
+	prossimo *elementoPila
 }
 
 func esegui(p piano, s string) {
@@ -33,8 +34,8 @@ func esegui(p piano, s string) {
 	switch comandi[0] {
 	case "c":
 		P := newPiano()
-		p.inizio = P.inizio
-		p.fine = P.fine
+		p.automi = P.automi
+		p.ostacoli = P.ostacoli
 	case "S":
 		(*p).stampa()
 	case "s":
@@ -73,24 +74,23 @@ func main() {
 	for scanner.Scan() {
 		esegui(pCampo, scanner.Text())
 	}
-	Println(&Campo)
 }
 
 func (Campo Piano) stampa() {
 	percorrente := new(punto)
 	Println("(")
-	percorrente = Campo.inizio
-	for percorrente != nil && !strings.Contains(percorrente.id, "ostacolo") {
+	percorrente = Campo.automi
+	for percorrente != nil {
 		Printf("%s: %d,%d\n", percorrente.id, percorrente.coordinataX, percorrente.coordinataY)
 		percorrente = percorrente.successivo
 	}
 	Println(")")
 	Println("[")
-	percorrente = Campo.fine
-	for percorrente != nil && strings.Contains(percorrente.id, "ostacolo") {
+	percorrente = Campo.ostacoli
+	for percorrente != nil {
 		x0, y0, x1, y1 := estraiCoordinate(percorrente.id)
 		Printf("(%d,%d)(%d,%d)\n", x0, y0, x1, y1)
-		percorrente = percorrente.precedente
+		percorrente = percorrente.successivo
 	}
 	Println("]")
 }
@@ -111,8 +111,8 @@ func (Campo Piano) stato(x, y int) {
 func (Campo Piano) posizioni(alpha string) {
 	percorrente := new(punto)
 	Println("(")
-	percorrente = Campo.inizio
-	for percorrente != nil && !strings.Contains(percorrente.id, "ostacolo") {
+	percorrente = Campo.automi
+	for percorrente != nil {
 		if strings.HasPrefix(percorrente.id, alpha) {
 			Printf("%s: %d,%d\n", percorrente.id, percorrente.coordinataX, percorrente.coordinataY)
 		}
@@ -153,31 +153,26 @@ func newPiano() piano {
 func (Campo *Piano) automa(x, y int, eta string) {
 	puntoCercato := Campo.cerca(x, y, eta)
 	if puntoCercato != nil {
-		if strings.Contains(puntoCercato.id, "ostacolo") && Campo.cercaOstacolo(x, y) == nil {
-			return
-		} else {
-			puntoCercato.coordinataX = x
-			puntoCercato.coordinataY = y
-		}
-	} else if Campo.cercaOstacolo(x, y) == nil {
+		puntoCercato.coordinataX = x
+		puntoCercato.coordinataY = y
+	}
+	if Campo.cercaOstacolo(x, y) == nil {
 		puntoCercato = new(punto)
 		puntoCercato.coordinataX = x
 		puntoCercato.coordinataY = y
 		puntoCercato.id = eta
-		if Campo.inizio == nil {
-			Campo.inizio = puntoCercato
-			Campo.fine = puntoCercato
+		if Campo.automi == nil {
+			Campo.automi = puntoCercato
 			return
 		}
-		Campo.inizio.precedente = puntoCercato
-		puntoCercato.successivo = Campo.inizio
-		Campo.inizio = puntoCercato
+		puntoCercato.successivo = Campo.automi
+		Campo.automi = puntoCercato
 	}
 }
 
 func (Campo *Piano) ostacolo(x0, y0, x1, y1 int) {
-	percorrente := Campo.inizio
-	for percorrente != nil && !strings.Contains(percorrente.id, "ostacolo") {
+	percorrente := Campo.automi
+	for percorrente != nil {
 		if (percorrente.coordinataX <= x1 && percorrente.coordinataX >= x0) && (percorrente.coordinataY <= y1 && percorrente.coordinataY >= y0) {
 			return
 		}
@@ -187,14 +182,12 @@ func (Campo *Piano) ostacolo(x0, y0, x1, y1 int) {
 	newOstacolo.coordinataX = x0
 	newOstacolo.coordinataY = y1
 	newOstacolo.id = Sprintf("%d,%d,%d,%d,ostacolo", x0, y0, x1, y1)
-	if Campo.fine == nil {
-		Campo.fine = newOstacolo
-		Campo.inizio = newOstacolo
+	if Campo.ostacoli == nil {
+		Campo.ostacoli = newOstacolo
 		return
 	}
-	newOstacolo.precedente = Campo.fine
-	Campo.fine.successivo = newOstacolo
-	Campo.fine = newOstacolo
+	newOstacolo.successivo = Campo.ostacoli
+	Campo.ostacoli = newOstacolo
 }
 
 func (Campo *Piano) richiamo(x, y int, alpha string) {
@@ -202,9 +195,9 @@ func (Campo *Piano) richiamo(x, y int, alpha string) {
 	Sorgente.coordinataX = x
 	Sorgente.coordinataY = y
 	minDistance := math.MaxInt
-	pilaChiamata := new(nodoPila)
-	percorrente := Campo.inizio
-	for percorrente != nil && !strings.Contains(percorrente.id, "ostacolo") {
+	pilaChiamata := new(elementoPila)
+	percorrente := Campo.automi
+	for percorrente != nil {
 		if strings.HasPrefix(percorrente.id, alpha) {
 			distanza := calcolaDistanza(percorrente.coordinataX, percorrente.coordinataY, x, y)
 			possibileAvanzamento, entro := avanza(Campo, percorrente, Sorgente, distanza)
@@ -212,11 +205,11 @@ func (Campo *Piano) richiamo(x, y int, alpha string) {
 				if distanza <= minDistance {
 					minDistance = distanza
 				}
-				nodoChiamata := new(nodoPila)
-				nodoChiamata.chiamato = percorrente
-				nodoChiamata.prossimo = pilaChiamata
-				nodoChiamata.distanza = distanza
-				pilaChiamata = nodoChiamata
+				automaChiamato := new(elementoPila)
+				automaChiamato.chiamato = percorrente
+				automaChiamato.prossimo = pilaChiamata
+				automaChiamato.distanza = distanza
+				pilaChiamata = automaChiamato
 			}
 		}
 		percorrente = percorrente.successivo
@@ -429,19 +422,19 @@ func (Campo *Piano) forwardingY(start *punto, destination *punto) *punto {
 }
 
 func (Campo *Piano) cercaOstacolo(x int, y int) *punto {
-	percorrente := Campo.fine
-	for percorrente != nil && strings.Contains(percorrente.id, "ostacolo") {
+	percorrente := Campo.ostacoli
+	for percorrente != nil {
 		x0, y0, x1, y1 := estraiCoordinate(percorrente.id)
 		if (x <= x1 && x >= x0) && (y <= y1 && y >= y0) {
 			return percorrente
 		}
-		percorrente = percorrente.precedente
+		percorrente = percorrente.successivo
 	}
 	return nil
 }
 
 func (Campo *Piano) cerca(x, y int, id string) *punto {
-	percorrente := Campo.inizio
+	percorrente := Campo.automi
 	for percorrente != nil {
 		if percorrente.coordinataX == x && percorrente.coordinataY == y || percorrente.id == id {
 			return percorrente

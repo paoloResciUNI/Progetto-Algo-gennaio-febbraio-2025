@@ -74,7 +74,6 @@ func main() {
 	for scanner.Scan() {
 		esegui(pCampo, scanner.Text())
 	}
-	Println(&Campo)
 }
 
 func (Campo Piano) stampa() {
@@ -166,20 +165,14 @@ func (Campo *Piano) automa(x, y int, eta string) {
 			Campo.automi = puntoCercato
 			return
 		}
-		percorrente := Campo.automi
-		for percorrente != nil {
-			if percorrente.successivo == nil {
-				percorrente.successivo = puntoCercato
-				return
-			}
-		}
-
+		puntoCercato.successivo = Campo.automi
+		Campo.automi = puntoCercato
 	}
 }
 
 func (Campo *Piano) ostacolo(x0, y0, x1, y1 int) {
 	percorrente := Campo.automi
-	for percorrente != nil && !strings.Contains(percorrente.id, "ostacolo") {
+	for percorrente != nil {
 		if (percorrente.coordinataX <= x1 && percorrente.coordinataX >= x0) && (percorrente.coordinataY <= y1 && percorrente.coordinataY >= y0) {
 			return
 		}
@@ -193,13 +186,8 @@ func (Campo *Piano) ostacolo(x0, y0, x1, y1 int) {
 		Campo.ostacoli = newOstacolo
 		return
 	}
-	percorrente = Campo.ostacoli
-	for percorrente != nil {
-		if percorrente.successivo == nil {
-			percorrente.successivo = newOstacolo
-			return
-		}
-	}
+	newOstacolo.successivo = Campo.ostacoli
+	Campo.ostacoli = newOstacolo
 }
 
 func (Campo *Piano) richiamo(x, y int, alpha string) {
