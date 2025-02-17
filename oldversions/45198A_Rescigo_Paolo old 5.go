@@ -135,7 +135,8 @@ func (Campo *Piano) esistePercorso(x, y int, eta string) {
 		Println("NO")
 		return
 	}
-	percorsoEffettuato := (avanza(Campo, percorrente, Sorgente))
+	distanza := calcolaDistanza(percorrente.coordinataX, percorrente.coordinataY, x, y)
+	percorsoEffettuato := (avanza(Campo, percorrente, Sorgente, distanza))
 	if percorsoEffettuato.coordinataX == x && percorsoEffettuato.coordinataY == y {
 		Println("SI")
 		return
@@ -199,7 +200,7 @@ func (Campo *Piano) richiamo(x, y int, alpha string) {
 	for percorrente != nil {
 		if strings.HasPrefix(percorrente.id, alpha) {
 			distanza := calcolaDistanza(percorrente.coordinataX, percorrente.coordinataY, x, y)
-			possibileAvanzamento := avanza(Campo, percorrente, Sorgente)
+			possibileAvanzamento := avanza(Campo, percorrente, Sorgente, distanza)
 			if possibileAvanzamento.coordinataX == x && possibileAvanzamento.coordinataY == y {
 				if distanza <= minDistance {
 					minDistance = distanza
@@ -216,8 +217,11 @@ func (Campo *Piano) richiamo(x, y int, alpha string) {
 	attraversoPila := pilaChiamata
 	for attraversoPila != nil {
 		if attraversoPila.distanza == minDistance {
-			attraversoPila.chiamato.coordinataX = x
-			attraversoPila.chiamato.coordinataY = y
+			possibileArrivo := avanza(Campo, attraversoPila.chiamato, Sorgente, minDistance)
+			if possibileArrivo.coordinataX == x && possibileArrivo.coordinataY == y {
+				attraversoPila.chiamato.coordinataX = x
+				attraversoPila.chiamato.coordinataY = y
+			}
 		}
 		attraversoPila = attraversoPila.prossimo
 	}
@@ -302,11 +306,10 @@ func calcolaDistanza(x0, y0, x1, y1 int) int {
 	return int(Distanza)
 }
 
-func avanza(Campo piano, p *punto, Sorgente *punto) *punto {
+func avanza(Campo piano, p *punto, Sorgente *punto, passi int) *punto {
 	var distanzaVerticaleO, distanzaOrizzontaleO int
-	passi := calcolaDistanza(p.coordinataX, p.coordinataY, Sorgente.coordinataX, Sorgente.coordinataY)
 	if passi <= 0 || p.coordinataX == Sorgente.coordinataX && p.coordinataY == Sorgente.coordinataY {
-		return p
+		return p 
 	}
 	possibilePasso := new(punto)
 	possibilePasso.coordinataX = p.coordinataX
@@ -325,7 +328,8 @@ func avanza(Campo piano, p *punto, Sorgente *punto) *punto {
 	if p.coordinataX == possibilePasso.coordinataX && p.coordinataY == possibilePasso.coordinataY {
 		return possibilePasso
 	}
-	return avanza(Campo, possibilePasso, Sorgente)
+	passi--
+	return avanza(Campo, possibilePasso, Sorgente, passi)
 }
 
 func (Campo *Piano) forwardingX(start *punto, destination *punto) *punto {
