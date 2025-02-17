@@ -1,0 +1,5 @@
+Nella relazione la prof. Lonati ha detto di cambiare:
+- Togliere la spiegazione di funzioni inutili o facilmente comprensibili dal nome
+- Togliere la spiegazione delle operazioni già definiti nella traccia del progetto
+- Spiegare meglio la funzione avanza e i metodi di forwarding. DEVONO ESSE COMPRESNIBILI E DI FACILE LETTURA!!
+- Vedere ulteriori modifiche al codice. **Con prudenza**
