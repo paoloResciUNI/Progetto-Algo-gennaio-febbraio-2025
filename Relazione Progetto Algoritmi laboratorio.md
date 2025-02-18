@@ -2,40 +2,48 @@
 
 ## Introduzione
 
-Questa relazione presenta le specifiche delle funzioni implementate allo scopo di risolvere il problema dato nella traccia. Nella relzione si farà riferimento alla distanza di Manhattan fra due punti del piano con $D$, al numero di automi nel piano con $a$ e al numero di ostacoli con $m$.
+Questa relazione presenta le specifiche delle funzioni implementate allo scopo di risolvere il problema dato nella traccia. Nella relazione si farà riferimento alla distanza di Manhattan fra due punti del piano con $D$, al numero di automi nel piano con $a$ e al numero di ostacoli con $m$.
 
 ## Strutture dati e scelte progettuali
 
-Per rappresentare il piano è stata usata una struttura con riferimento a due liste concatenate, una per contenere gli automi e un'altra per gli ostacoli. Questa scelta permette di gestire dinamicamente l'aggiunta e la modifica di automi e di ostacoli. Inoltre, la lista è una struttura relativamente leggera in termini di consumo di memoria e facile da manipolare. 
+Per rappresentare il piano è stata usata una struttura con riferimento a due liste concatenate, una per contenere gli automi e un'altra per gli ostacoli. Questa scelta permette di gestire dinamicamente l'aggiunta e la modifica di automi e di ostacoli. Inoltre, la lista è una struttura relativamente leggera in termini di consumo di memoria e facile da manipolare.
 
 ### Strutture dati principali
 
-- **`punto`**: rappresenta un punto del piano, contenente le coordinate `x` e `y`, un identificativo `id` e un puntatore ad un tipo `punto`. Questo tipo di dato viene usato per rappresentare sia automi che ostacoli 
-- **`Piano`**: struttura principale che mantiene riferimenti ad una lista di ostacoli e ad una di automi.
-- **`piano`**: alias di un tipo puntatore ad una variabile `Piano`.
-- **`elementoPila`**: struttura usata per gestire l'operazione di richiamo, memorizzando gli automi candidati allo spostamento. Composta da: un tipo `*punto`, che rappresenta l'automa candidato, un tipo `int` che rappresenta la distaza che il candidato ha dal richiamo e un tipo `*elementoPila` che collega la struttura ad una pila. Questa struttura è usata esclusivamente nel metodo `richiamo`.
+- **`punto`**: rappresenta un punto del piano, contenente le coordinate `x` e `y`, un identificativo `id` e un puntatore a un tipo `punto`. Questo tipo di dato viene usato per rappresentare sia automi che ostacoli 
+- **`Piano`**: struttura principale che mantiene riferimenti a una lista di ostacoli e a una di automi.
+- **`piano`**: alias di un tipo puntatore a una variabile `Piano`.
+- **`elementoPila`**: struttura usata per gestire l'operazione di richiamo, memorizzando gli automi candidati allo spostamento. Composta da: un tipo `*punto`, che rappresenta l'automa candidato, un tipo `int` che rappresenta la distanza che il candidato ha dal richiamo e un tipo `*elementoPila` che collega la struttura a una pila. Questa struttura è usata esclusivamente nel metodo `richiamo`.
 
-### Moviementi degli automi
+### Movimenti degli automi
 
-**`avanza(Campo piano, p *punto, Sorgente *punto) *punto`**: Questa funzione simula lo spostamento dell'automa, `p`, verso il richiamo, `Sorgente`. È una funzione ricorsiva che come caso base ha $D = 0$, dove $D$ è la distanza di Manhattan fra `p` e `Sorgente`. La funzione `avanza` restituisce il punto nel quale la simulazione si è fermata, ovvero se l'automa ha raggiunto la sorgente del richiamo oppure se è andato in stallo (non ci sono percorsi liberi). Questa funzione dispone dei metodi `forwardX` e `forwardY` che spostano l'automa su un rispettivo asse, in modo che, se non raggiunge direttamente il richiamo, esso possa comunque poi avanzare ulteriormente nella funzione. L'`avanza` assume che `forwardX` e `forwardY` spostino sempre l'automa, se ciò non accade l'automa è andato in stallo e la funzione termina. Altri dettagli sulla logica di forward sono forniti più avanti nel paragrafo.
-La funzione `avanza` calcola la distanza dagli ostacoli sull'asse orizzontale e verticale che l'automa ha in un determinato momento; in caso non vi siano ostacoli su almeno uno dei due assi, dell'automa, si utilizza la distanza fra le rispettive coordinate dei due punti (la $x$ e la $y$ dell'automa con la $x$ e la $y$ del richiamo). L'automa quindi si sposterà solamente dove la distanza è maggiore, quindi dove può fare più passi. Per esempio, se la distanza è maggiore per l'asse verticale, allora verrà usata la `forwardY` altrimenti la `forwardX`. Un caso particolare si ha quando la distanza dagli ostacoli è uguale su entrambi gli assi. In questo caso si esegue un passo unitario sull'asse orizzontale, a destra o a sinistra. Se questo non è possibile allora l'automa è andato in stallo e la funzione termina.
+**`avanza(Campo piano, p *punto, Sorgente *punto) *punto`**: Questa funzione simula lo spostamento dell'automa `p` verso il richiamo, `Sorgente`. È una funzione ricorsiva che come caso base ha $D = 0$, dove $D$ è la distanza di Manhattan fra `p` e `Sorgente`. La funzione `avanza` restituisce il punto nel quale la simulazione si è fermata, ovvero se l'automa ha raggiunto la sorgente del richiamo oppure se è andato in stallo (non ha trovato percorsi liberi).
 
-La funzione `avanza` impiega $O(D^2 \cdot m)$ questo perchè nel caso peggiore dovrà fare $D$ passi ricorsivi e quindi eseguire altrettante volte la logica di forwarding.
+L'`avanza` assume che `forwardX` e `forwardY` spostino sempre l'automa; se ciò non accade, l'automa è andato in stallo e la funzione termina. Altri dettagli sulla logica di `forward` sono forniti più avanti nel paragrafo. La funzione `avanza` calcola la distanza dagli ostacoli sull'asse orizzontale e verticale che l'automa ha in un determinato momento; in caso non vi siano ostacoli su almeno uno dei due assi dell'automa, si utilizza la distanza fra le rispettive coordinate dei due punti (la $x$ e la $y$ dell'automa con la $x$ e la $y$ della sorgente). L'automa quindi si sposterà solamente dove la distanza è maggiore. Per esempio, se la distanza è maggiore per l'asse verticale, allora verrà usata la `forwardY`, altrimenti la `forwardX`. Un caso particolare si ha quando la distanza dagli ostacoli è uguale su entrambi gli assi. In questo caso si esegue un passo unitario sull'asse orizzontale, a destra o a sinistra. Se questo non è possibile, allora l'automa è andato in stallo e la funzione termina.
+
+La funzione `avanza` impiega $O(D^2 \cdot m)$ perché nel caso peggiore dovrà fare $D$ passi ricorsivi e quindi eseguire altrettante volte la logica di forward, i cui tempi d'esecuzione sono discussi in seguito.
 
 > Nota: Dato che la logica per `forwardX` e `forwardY` è la stessa, di seguito viene fornita esclusivamente la spiegazione di `forwardX`.
 
-La `forwardX` prende in ingresso due punti, `start` e `destination`. Restituisce un punto che si trova sullo stesso asse orizzontale di `start`, e più vicino, rispetto a `start`,  all'asse verticale di `destination`. Il punto restituito è posizionato in modo che si possa poi fare uno spostamento varticale, cioè una `forwardY`, senza essere bloccato da un ostacolo. Questo punto restituito verrà chiamato d'ora in poi $\lambda$. In particolare `forwardX` si comporta in questo modo:
-controlla se c'è un ostacolo sull'asse verticale di `start`. Da quì ho due possibilità:
-1. L'ostaclo c'è. Allora $\lambda$ viene posizionato sulla prima coordinata $x$ oltre l'ostacolo (per aggirarlo). A questo punto `forwardX` restituisce $\lambda$ e termina l'esecuzione.
-2. L'ostacolo non c'è. Allora controllo se ci sono ostacoli sull'asse orizzontale di `start`, fino alla coordinata $x$ di `destination`. Da qui ci sono altre due possibilità:
-    1) Non ci sono ostacoli sull'asse (almeno fino alla $x$ di `destination`). Allora $\lambda$ viene posizionato sulla coordinata $x$ di `destination`. Viene fatto un ulteriore controllo degli ostacoli sull'asse veritcale, questa volta di $\lambda$.
-        - Se non ci sono ostacoli, `forwardX` restituisce $\lambda$ e termina l'esecuzione. 
-        - Altrimenti $\lambda$ viene retrocesso nella prima coordinata $x$ utile per aggirare l'ostacolo.    
-    2) Viene trovato un'ostacolo. Allora $\lambda$ viene posizionato sulla coordinata $x$ subito prima all'ostacolo. iene fatto un ulteriore controllo degli ostacoli sull'asse veritcale, questa volta di $\lambda$.
-        - Se non ci sono ostacoli, `forwardX` restituisce $\lambda$ e termina l'esecuzione. 
-        - Altrimenti $\lambda$ viene retrocesso nella prima coordinata $x$ utile per aggirare l'ostacolo.    
-<!-- - Sull'asse verticale di `start`: si controlla se c'è un ostacolo e si procede ad aggirarlo posizionando $\lambda$ sulla coordinata $x$ successiva ad esso. Si restituisce $\lambda$ e `forwardX` termina. In caso non ci siano ostacoli sull'asse verticale di `start` viene fatto un controllo sul suo asse orizzontale.
-- Sull'asse orizzontale di `start`: questo controllo viene fatto solo se non ci sono ostacoli sull'asse verticale. Se c'è un ostacolo sull'asse orizzontale allora $\lambda$ viene posizionato subito prima di esso, altrimenti viene posizionato sull'asse $x$ di `destination`. Dopo aver posizionato $\lambda$ si controlla se sul suo asse verticale si incontrano ostacoli, se ciò non avviene $\lambda$ viene restituito, altrimenti si fa retrocedere (verso la $x$ di `start`) in modo che venga aggirato l'ostacolo. A questo punto $\lambda$ viene restituito. -->
+La `forwardX` prende in ingresso due punti, `start` e `destination`. Restituisce un punto che si trova sullo stesso asse orizzontale di `start` e più vicino, rispetto a `start`, all'asse verticale di `destination`. Il punto restituito è posizionato in modo che si possa poi fare uno spostamento verticale, cioè una `forwardY`, senza essere bloccato da un ostacolo. Questo punto restituito verrà chiamato d'ora in poi $\lambda$. In particolare, `forwardX` si comporta in questo modo:
+
+Controlla se c'è un ostacolo sull'asse verticale di `start`. Da qui si hanno due possibilità:
+
+1. L'ostacolo c'è. Allora, $\lambda$ viene posizionato sulla prima coordinata $x$ oltre l'ostacolo (per aggirarlo). A questo punto, `forwardX` restituisce $\lambda$ e termina l'esecuzione.
+
+2. L'ostacolo non c'è. Allora si controlla se ci sono ostacoli sull'asse orizzontale di `start`, fino alla coordinata $x$ di `destination`. Da qui si presentano altri due casi possibili:
+   
+   1) Non ci sono ostacoli sull'asse (almeno fino alla $x$ di `destination`). Allora, $\lambda$ viene posizionato sulla coordinata $x$ di `destination`. Viene fatto un ulteriore controllo degli ostacoli sull'asse verticale, questa volta di $\lambda$.
+      - Se non ci sono ostacoli, `forwardX` restituisce $\lambda$ e termina l'esecuzione.
+      - Altrimenti, $\lambda$ viene retrocesso nella prima coordinata $x$ utile per aggirare l'ostacolo e viene restituito.
+   2) Viene trovato un ostacolo. Allora, $\lambda$ viene posizionato sulla coordinata $x$ subito prima dell'ostacolo. Viene fatto un ulteriore controllo degli ostacoli sull'asse verticale, questa volta di $\lambda$.
+      - Se non ci sono ostacoli, `forwardX` restituisce $\lambda` e termina l'esecuzione.
+      - Altrimenti, $\lambda` viene retrocesso nella prima coordinata $x$ utile per aggirare l'ostacolo e viene restituito.
+
+Il metodo `forwardX`, quindi anche `forwardY`, impiega $O(m \cdot D)$. Questo tempo è dovuto al fatto che, per ogni punto dell'asse verticale e dell'asse orizzontale che il metodo deve controllare, scorre, nel caso peggiore, tutta la lista degli ostacoli del piano.
+      - Altrimenti $\lambda$ viene retrocesso nella prima coordinata $x$ utile per aggirare l'ostacolo e viene restituito.    
+
+<!-- - Sull'asse verticale di `start`: si controlla se c'è un ostacolo e si procede ad aggirarlo posizionando $\lambda$ sulla coordinata $x$ successiva ad esso. Si restituisce $\lambda$ e `forwardX` termina. In caso non ci siano ostacoli sull'asse verticale di `start` viene fatto un controllo sul suo asse orizzontale.Sull'asse orizzontale di `start`: questo controllo viene fatto solo se non ci sono ostacoli sull'asse verticale. Se c'è un ostacolo sull'asse orizzontale allora $\lambda$ viene posizionato subito prima di esso, altrimenti viene posizionato sull'asse $x$ di `destination`. Dopo aver posizionato $\lambda$ si controlla se sul suo asse verticale si incontrano ostacoli, se ciò non avviene $\lambda$ viene restituito, altrimenti si fa retrocedere (verso la $x$ di `start`) in modo che venga aggirato l'ostacolo. A questo punto $\lambda$ viene restituito. -->
 
 Il mtodo `fowardX`, quindi anche `forwardY`, impiega $O(m\cdot D)$. Questo tempo è dovuto al fatto che per ogni punto dell'asse verticale e dell'asse orizzontale, che il metodo deve controllare, scorre, nel caso peggiore, tutta la lista degli ostacoli del piano.
 
@@ -43,7 +51,7 @@ L'operazione `richiamo` è implementata da un metodo omonimo. Questo metodo cont
 
 ### Implementazione e tempi delle altre operazioni richieste
 
-L'operazione `crea` viene implementata restituendo una nuova variabile di tipo `Piano`, se questa non esiste già, altrimenti sostituisce i puntatori alle liste degli ostacoli e degli automi del piano con puntatori vuoti. Questa operazione impiega tempo costante essere eseguita.
+L'operazione `crea` viene implementata restituendo una nuova variabile di tipo `Piano`, se questa non esiste già, altrimenti sostituisce i puntatori alle liste degli ostacoli e degli automi del piano già esistente con puntatori vuoti. Questa operazione impiega tempo costante essere eseguita.
 
 L'operazione `stato` viene implementata scorrendo la lista degli automi e degli ostacoli. L'operazione richiede tempo pari a $O(a+m)$ nel caso peggiore.
 
