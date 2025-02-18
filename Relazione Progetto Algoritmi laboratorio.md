@@ -2,7 +2,7 @@
 
 ## Introduzione
 
-Questa relazione presenta le specifiche delle funzioni implementate allo scopo di risolvere il problema dato nella traccia. Nella relzione si farà riferimento alla distanza di Manhattan con $D$, al numero di automi nel campo con $a$ e al numero di ostacoli con $m$.
+Questa relazione presenta le specifiche delle funzioni implementate allo scopo di risolvere il problema dato nella traccia. Nella relzione si farà riferimento alla distanza di Manhattan fra due punti del piano con $D$, al numero di automi nel piano con $a$ e al numero di ostacoli con $m$.
 
 ## Strutture dati e scelte progettuali
 
@@ -37,9 +37,9 @@ L'operazione `richiamo` è implementata da un metodo omonimo. Questo metodo cont
 
 L'operazione `crea` viene implementata restituendo una nuova variabile di tipo `Piano`, se questa non esiste già, altrimenti sostituisce i puntatori alle liste degli ostacoli e degli automi del piano con puntatori vuoti. Questa operazione impiega tempo costante essere eseguita.
 
-L'operazione `stato` viene implementata scorrendo la lista degli automi e degli ostacoli. L'operazione `stato` richiede tempo pari a $O(a+m)$ nel caso peggiore.
+L'operazione `stato` viene implementata scorrendo la lista degli automi e degli ostacoli. L'operazione richiede tempo pari a $O(a+m)$ nel caso peggiore.
 
-L'operazione `stampa` scorre entrambe le liste degli ostacoli e degli automi del piano. Impiega tempo pari a $\Theta(a+m)$
+L'operazione `stampa` scorre entrambe le liste, degli ostacoli e degli automi, del piano. Impiega tempo pari a $\Theta(a+m)$
 
 L'operazione `automa` viene implementata scorrendo la lista degli ostacoli e la lista degli automi facenti parte della struttura `Piano`. Questa operazione impiega $\Theta(a+m)$.
 
@@ -47,7 +47,7 @@ L'operazione `ostacolo` viene implementata scorrendo esclusivamente la lista deg
 
 L'operazione `posizioni` è implementata scorrendo la lista degli automi e verificando che l'automa considerato abbia il prefisso giusto. Questa operazione impiega $O(a)$.
 
-L'operazione `esistePercorso` è implementata controllando prima che l'id cercato corrisponda ad un automa esistenete e poi controlla se il punto di arrivo non corrisponda all'area di un ostacolo. Se almeno una di queste condizioni non si verifica viene stampato su standard output `NO`. Altrimenti viene usata la funzione `avanza`. La funzione prende in ingresso l'automa e il punto d'arrivo e restituisce un punto. Se il punto restituito dalla funzione `avanza` ha le stesse coordinata del punto d'arrivo viene stampato su standard output `SI`, altrimenti `NO`.
+L'operazione `esistePercorso` è implementata controllando prima che l'id cercato corrisponda ad un automa esistenete e poi controllando se il punto di arrivo non corrisponda all'area di un ostacolo. Se almeno una di queste condizioni non si verifica viene stampato su standard output `NO`. Altrimenti viene usata la funzione `avanza`. La funzione prende in ingresso l'automa e il punto d'arrivo e restituisce un punto. Se il punto restituito dalla funzione `avanza` ha le stesse coordinata del punto d'arrivo viene stampato su standard output `SI`, altrimenti `NO`.
 
 ### Esempi di esecuzione
 
