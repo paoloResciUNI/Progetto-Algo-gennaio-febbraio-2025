@@ -224,7 +224,7 @@ func (Campo *Piano) richiamo(x, y int, alpha string) {
 }
 
 func (Campo *Piano) ostacoliPercorso(partenza, arrivo *punto) (distanza_O_Ascisse, distanza_O_Ordinate int) {
-	_, ostacoloVicino := partenza.posizioneOstacoloVerticale(Campo, arrivo.coordinataY)
+	ostacoloVicino := partenza.posizioneOstacoloVerticale(Campo, arrivo.coordinataY)
 	if ostacoloVicino != nil {
 		_, y0, _, y1 := estraiCoordinate(ostacoloVicino.id)
 		if arrivo.coordinataY < partenza.coordinataY {
@@ -235,7 +235,7 @@ func (Campo *Piano) ostacoliPercorso(partenza, arrivo *punto) (distanza_O_Asciss
 	} else {
 		distanza_O_Ordinate = calcolaDistanza(partenza.coordinataX, partenza.coordinataY, partenza.coordinataX, arrivo.coordinataY)
 	}
-	_, ostacoloVicino = partenza.posizioneOstacoloOrizzontale(Campo, arrivo.coordinataX)
+	ostacoloVicino = partenza.posizioneOstacoloOrizzontale(Campo, arrivo.coordinataX)
 	if ostacoloVicino != nil {
 		x0, _, x1, _ := estraiCoordinate(ostacoloVicino.id)
 		if arrivo.coordinataX < partenza.coordinataX {
@@ -249,42 +249,42 @@ func (Campo *Piano) ostacoliPercorso(partenza, arrivo *punto) (distanza_O_Asciss
 	return
 }
 
-func (p *punto) posizioneOstacoloVerticale(Campo piano, y int) (bool, *punto) {
+func (p *punto) posizioneOstacoloVerticale(Campo piano, y int) *punto {
 	if p.coordinataY > y {
 		for i := p.coordinataY - 1; i >= y; i-- {
 			ostacolo := (*Campo).cercaOstacolo(p.coordinataX, i)
 			if ostacolo != nil {
-				return true, ostacolo
+				return ostacolo
 			}
 		}
 	} else if p.coordinataY < y {
 		for i := p.coordinataY + 1; i < y; i++ {
 			ostacolo := (*Campo).cercaOstacolo(p.coordinataX, i)
 			if ostacolo != nil {
-				return true, ostacolo
+				return ostacolo
 			}
 		}
 	}
-	return false, nil
+	return nil
 }
 
-func (p *punto) posizioneOstacoloOrizzontale(Campo piano, x int) (bool, *punto) {
+func (p *punto) posizioneOstacoloOrizzontale(Campo piano, x int) *punto {
 	if p.coordinataX > x {
 		for i := p.coordinataX - 1; i >= x; i-- {
 			ostacolo := (*Campo).cercaOstacolo(i, p.coordinataY)
 			if ostacolo != nil {
-				return true, ostacolo
+				return ostacolo
 			}
 		}
 	} else if p.coordinataX < x {
 		for i := p.coordinataX + 1; i < x; i++ {
 			ostacolo := (*Campo).cercaOstacolo(i, p.coordinataY)
 			if ostacolo != nil {
-				return true, ostacolo
+				return ostacolo
 			}
 		}
 	}
-	return false, nil
+	return nil
 }
 
 func estraiCoordinate(id string) (x0 int, y0 int, x1 int, y1 int) {
@@ -303,7 +303,7 @@ func calcolaDistanza(x0, y0, x1, y1 int) int {
 }
 
 func avanza(Campo piano, p *punto, Sorgente *punto) *punto {
-	var distanzaVerticaleO, distanzaOrizzontaleO int
+	var distanzaVerticale, distanzaOrizzontale int
 	passi := calcolaDistanza(p.coordinataX, p.coordinataY, Sorgente.coordinataX, Sorgente.coordinataY)
 	if passi <= 0 || p.coordinataX == Sorgente.coordinataX && p.coordinataY == Sorgente.coordinataY {
 		return p
@@ -312,15 +312,15 @@ func avanza(Campo piano, p *punto, Sorgente *punto) *punto {
 	possibilePasso.coordinataX = p.coordinataX
 	possibilePasso.coordinataY = p.coordinataY
 	possibilePasso.id = p.id
-	distanzaOrizzontaleO, distanzaVerticaleO = (*Campo).ostacoliPercorso(possibilePasso, Sorgente)
-	if distanzaVerticaleO < distanzaOrizzontaleO {
-		possibilePasso = (*Campo).forwardingX(possibilePasso, Sorgente)
-	} else if distanzaOrizzontaleO == distanzaVerticaleO && p.coordinataX < Sorgente.coordinataX && (*Campo).cercaOstacolo(p.coordinataX+1, p.coordinataY) == nil {
+	distanzaOrizzontale, distanzaVerticale = (*Campo).ostacoliPercorso(possibilePasso, Sorgente)
+	if distanzaVerticale < distanzaOrizzontale {
+		possibilePasso = (*Campo).forwardX(possibilePasso, Sorgente)
+	} else if distanzaOrizzontale == distanzaVerticale && p.coordinataX < Sorgente.coordinataX && (*Campo).cercaOstacolo(p.coordinataX+1, p.coordinataY) == nil {
 		possibilePasso.coordinataX++
-	} else if distanzaOrizzontaleO == distanzaVerticaleO && p.coordinataX > Sorgente.coordinataX && (*Campo).cercaOstacolo(p.coordinataX-1, p.coordinataY) == nil {
+	} else if distanzaOrizzontale == distanzaVerticale && p.coordinataX > Sorgente.coordinataX && (*Campo).cercaOstacolo(p.coordinataX-1, p.coordinataY) == nil {
 		possibilePasso.coordinataX--
-	} else if distanzaVerticaleO > distanzaOrizzontaleO {
-		possibilePasso = (*Campo).forwardingY(possibilePasso, Sorgente)
+	} else if distanzaVerticale > distanzaOrizzontale {
+		possibilePasso = (*Campo).forwardY(possibilePasso, Sorgente)
 	}
 	if p.coordinataX == possibilePasso.coordinataX && p.coordinataY == possibilePasso.coordinataY {
 		return possibilePasso
@@ -328,9 +328,9 @@ func avanza(Campo piano, p *punto, Sorgente *punto) *punto {
 	return avanza(Campo, possibilePasso, Sorgente)
 }
 
-func (Campo *Piano) forwardingX(start *punto, destination *punto) *punto {
+func (Campo *Piano) forwardX(start *punto, destination *punto) *punto {
 	var forward punto
-	_, ostacoloVicino := start.posizioneOstacoloVerticale(Campo, destination.coordinataY)
+	ostacoloVicino := start.posizioneOstacoloVerticale(Campo, destination.coordinataY)
 	if ostacoloVicino != nil {
 		var puntoE, puntoO int
 		x0, _, x1, _ := estraiCoordinate(ostacoloVicino.id)
@@ -345,7 +345,7 @@ func (Campo *Piano) forwardingX(start *punto, destination *punto) *punto {
 		}
 		return &forward
 	}
-	_, ostacoloVicino = start.posizioneOstacoloOrizzontale(Campo, destination.coordinataX)
+	ostacoloVicino = start.posizioneOstacoloOrizzontale(Campo, destination.coordinataX)
 	if ostacoloVicino != nil {
 		x0, _, x1, _ := estraiCoordinate(ostacoloVicino.id)
 		if start.coordinataX < destination.coordinataX {
@@ -357,7 +357,7 @@ func (Campo *Piano) forwardingX(start *punto, destination *punto) *punto {
 		forward.coordinataX = destination.coordinataX
 	}
 	forward.coordinataY = start.coordinataY
-	_, osostacoloVicino := forward.posizioneOstacoloVerticale(Campo, destination.coordinataX)
+	osostacoloVicino := forward.posizioneOstacoloVerticale(Campo, destination.coordinataX)
 	if osostacoloVicino != nil {
 		var puntoE, puntoO int
 		x0, _, x1, _ := estraiCoordinate(osostacoloVicino.id)
@@ -372,9 +372,9 @@ func (Campo *Piano) forwardingX(start *punto, destination *punto) *punto {
 	return &forward
 }
 
-func (Campo *Piano) forwardingY(start *punto, destination *punto) *punto {
+func (Campo *Piano) forwardY(start *punto, destination *punto) *punto {
 	var forward punto
-	_, ostacoloVicino := start.posizioneOstacoloOrizzontale(Campo, destination.coordinataX)
+	ostacoloVicino := start.posizioneOstacoloOrizzontale(Campo, destination.coordinataX)
 	if ostacoloVicino != nil {
 		var puntoN, puntoS int
 		_, y0, _, y1 := estraiCoordinate(ostacoloVicino.id)
@@ -390,7 +390,7 @@ func (Campo *Piano) forwardingY(start *punto, destination *punto) *punto {
 		return &forward
 	}
 	forward.coordinataX = start.coordinataX
-	_, ostacoloVicino = start.posizioneOstacoloVerticale(Campo, destination.coordinataY)
+	ostacoloVicino = start.posizioneOstacoloVerticale(Campo, destination.coordinataY)
 	if ostacoloVicino != nil {
 		_, y0, _, y1 := estraiCoordinate(ostacoloVicino.id)
 		if start.coordinataY < destination.coordinataY {
@@ -401,7 +401,7 @@ func (Campo *Piano) forwardingY(start *punto, destination *punto) *punto {
 	} else {
 		forward.coordinataY = destination.coordinataY
 	}
-	_, ostacoloVicino = forward.posizioneOstacoloOrizzontale(Campo, destination.coordinataX)
+	ostacoloVicino = forward.posizioneOstacoloOrizzontale(Campo, destination.coordinataX)
 	if ostacoloVicino != nil {
 		var puntoN, puntoS int
 		_, y0, _, y1 := estraiCoordinate(ostacoloVicino.id)
